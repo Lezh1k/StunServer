@@ -16,14 +16,14 @@
 #include "EventLoop/EventLoop.h"
 #include "SynchroPrimitives/InternalCriticalSection.h"
 #include "Stun/ServerErrors.h"
-#include "Stun/Settings/StunSettings.h"
+#include "Settings/StunSettings.h"
 
 typedef int SOCKET;
 
 namespace Stun
 {
   class IServer;
-  typedef void (*pfDataReceived_t)(byte_t* data, int len, sockaddr* srcSockAddr, IServer* serverSock, SOCKET srcSock);
+  typedef void (*pfDataReceived_t)(int8_t* data, int len, sockaddr* srcSockAddr, IServer* serverSock, SOCKET srcSock);
 
   class IServer
   {
@@ -36,9 +36,9 @@ namespace Stun
 
     virtual bool IsInitialized(void) const= 0;
     virtual ServerErrors StartListen(pfDataReceived_t callback) = 0;
-    virtual SOCKET GetOtherSocket(SOCKET srcSockAddr, byte_t flags) = 0; //see rfc5780 CHANGE-REQUEST
+    virtual SOCKET GetOtherSocket(SOCKET srcSockAddr, int8_t flags) = 0; //see rfc5780 CHANGE-REQUEST
 
-    byte_t ServerSocketsCount() const {return m_serverSocketsCount;}
+    int8_t ServerSocketsCount() const {return m_serverSocketsCount;}
 
     const std::vector<sockaddr_in> GetServerSockAddresses(void) const {return m_lstSockaddrIn;}
     const std::vector<SOCKET> GetServerSockets(void) const {return m_hServerSockets;}
@@ -46,7 +46,7 @@ namespace Stun
   protected:
     std::vector<sockaddr_in> m_lstSockaddrIn;
     std::vector<SOCKET> m_hServerSockets;    
-    byte_t m_serverSocketsCount;
+    int8_t m_serverSocketsCount;
     std::vector<std::string> m_serverNames;
 
     bool InternalInitialize(int ai_family,

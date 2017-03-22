@@ -1,6 +1,7 @@
 
 #include <errno.h>
 #include <signal.h>
+#include <unistd.h>
 
 #include "Commons/ApplicationLog.h"
 #include "Commons/Commons.h"
@@ -8,11 +9,11 @@
 #include "Stun/UdpServer.h"
 #include "Stun/StunErrorCodes.h"
 #include "Stun/StunMessage.h"
-#include "Stun/Settings/StunSettings.h"
+#include "Settings/StunSettings.h"
 
 using namespace Stun;
 
-void DataReceived(byte_t* data, int len, sockaddr* srcSockAddr, IServer* server, SOCKET srcSock);
+void DataReceived(int8_t* data, int len, sockaddr* srcSockAddr, IServer* server, SOCKET srcSock);
 void HandleBindingRequest(CStunMessage* srcMessage, sockaddr* srcSockAddr, IServer* server, SOCKET srcSock);
 void HandleSuccessResponse(CStunMessage* srcMessage, sockaddr* srcSockAddr, IServer* server, SOCKET srcSock);
 int RunStunServer(const CStunSettings& settings);
@@ -88,7 +89,7 @@ end:
 //////////////////////////////////////////////////////////////////////////
 
 
-void DataReceived( byte_t* data, int len,
+void DataReceived( int8_t* data, int len,
                    sockaddr* srcSockAddr,
                    IServer* server, SOCKET srcSock ) {
   UNUSED_ARG(len);
@@ -145,7 +146,7 @@ void HandleBindingRequest( CStunMessage* srcMessage, sockaddr* srcSockAddr,
   CStunMessage sendedMsg;
   CStunMessage::ConstructAnswerMessage(srcMessage, responseMsg, srcSockAddr, server, srcSock);
 
-  byte_t* responseStream;
+  int8_t* responseStream;
   int serializeResult = responseMsg->Serialize(&responseStream);
   if (serializeResult != SMEC_SUCCESS) {
     CApplicationLog::Instance()->LogInfo("Serialization error : %d", serializeResult);
@@ -179,7 +180,7 @@ void HandleSuccessResponse( CStunMessage* srcMessage, sockaddr* srcSockAddr, ISe
   UNUSED_ARG(server);
 
   CStunMessage* responseMsg = new CStunMessage(MC_SUCCESS_RESPONSE, MM_RESERVED, srcMessage->MessageId());
-  byte_t* responseStream;
+  int8_t* responseStream;
   CApplicationLog::Instance()->LogError("HandleSuccessResponse");
   responseMsg->Serialize(&responseStream);
 

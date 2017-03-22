@@ -1,7 +1,7 @@
 #ifndef UDPSERVER_H
 #define UDPSERVER_H
 #include "IServer.h"
-#include "Stun/Settings/StunSettings.h"
+#include "Settings/StunSettings.h"
 
 namespace Stun {
   class CUdpServer : public IServer {
@@ -16,10 +16,10 @@ namespace Stun {
     bool m_isInitialized;
 
     int m_dataBufferLen;
-    byte_t* m_dataBuffer[MAX_SOCKET_COUNT];
+    int8_t* m_dataBuffer[MAX_SOCKET_COUNT];
     CEventLoop* m_recvEventLoop[MAX_SOCKET_COUNT];
     /*******************************/
-    static void InternalListen(CUdpServer* instance, SOCKET sock, byte_t* buff, int buffLen);
+    static void InternalListen(CUdpServer* instance, SOCKET sock, int8_t* buff, int buffLen);
     bool InternalInitialize(const CStunSettings &settings);
 
   public:
@@ -29,7 +29,7 @@ namespace Stun {
     virtual bool IsInitialized(void) const{return m_isInitialized;}
     virtual ServerErrors StartListen(pfDataReceived_t callback);
 
-    virtual SOCKET GetOtherSocket(SOCKET srcSockAddr, byte_t flags);
+    virtual SOCKET GetOtherSocket(SOCKET srcSockAddr, int8_t flags);
   };
 }
 

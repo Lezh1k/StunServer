@@ -1,4 +1,4 @@
-#include "IFunctor.h"
+#include "EventLoop/IFunctor.h"
 
 IFunctor::IFunctor( const char* methodName ) :
   m_isSynchronized(true), m_exceptionOccured(false),

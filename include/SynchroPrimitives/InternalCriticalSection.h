@@ -9,7 +9,7 @@ namespace SynchroPrimitives
 {
   typedef struct CriticalSection
   {
-    byte_t m_syncrhoBit;
+    int8_t m_syncrhoBit;
     CriticalSection();
   } CriticalSection, *LPMCriticalSection;
 

@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdarg.h>
-#include "ApplicationLog.h"
-#include "FileWrapper.h"
+#include "Commons/ApplicationLog.h"
+#include "Commons/FileWrapper.h"
 
 const char* CApplicationLog::LOG_FILE_DELIMITER =
 "|-----------------------------------------------------------------------------";

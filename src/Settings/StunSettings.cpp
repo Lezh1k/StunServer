@@ -2,7 +2,7 @@
 #include <math.h>
 #include "Commons/Commons.h"
 #include "Commons/IfstreamWrapper.h"
-#include "StunSettings.h"
+#include "Settings/StunSettings.h"
 
 const char* Stun::CStunSettings::SK_ADDR0 = "addr0";
 const char* Stun::CStunSettings::SK_ADDR1 = "addr1";

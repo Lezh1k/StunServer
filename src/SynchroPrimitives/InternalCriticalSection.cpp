@@ -1,5 +1,5 @@
 #include <unistd.h>
-#include "InternalCriticalSection.h"
+#include "SynchroPrimitives/InternalCriticalSection.h"
 
 void SynchroPrimitives::EnterInternalCriticalSection(LPMCriticalSection lpMcs ) {
   sleep_loop:

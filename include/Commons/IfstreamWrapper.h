@@ -5,12 +5,12 @@
 #include <fstream>
 #include <string>
 
-typedef unsigned char ubyte_t;
+typedef unsigned char uint8_t;
 
 class CIfstreamWrapper {
 private:
   std::ifstream m_ifStream;
-  static const ubyte_t m_buffSize = 0xff;
+  static const uint8_t m_buffSize = 0xff;
   char m_buffer[m_buffSize];
 
   CIfstreamWrapper(void);

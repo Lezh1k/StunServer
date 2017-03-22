@@ -21,7 +21,7 @@ int Stun::CStunAttributeFactory::CreateSoftwareAttribute( const char* strSoftwar
     result->m_header.length++;
 
   result->m_header.type = AT_SOFTWARE;
-  result->m_data = new byte_t[result->m_header.length];
+  result->m_data = new int8_t[result->m_header.length];
   memset(result->m_data, 0, result->m_header.length);
   memcpy(result->m_data, strSoftware, strLen);
 
@@ -30,7 +30,7 @@ int Stun::CStunAttributeFactory::CreateSoftwareAttribute( const char* strSoftwar
 }
 
 int Stun::CStunAttributeFactory::CreateAddressAttribute(const sockaddr* address,
-                                                        word_t type,
+                                                        int16_t type,
                                                         CStunAttribute** lpStunAttribute ) {
   CStunAttribute* result = MallocStunAttribute();
   CMappedAddressData* attributeData;
@@ -40,7 +40,7 @@ int Stun::CStunAttributeFactory::CreateAddressAttribute(const sockaddr* address,
   if (address->sa_family == AF_INET) {
     sockaddr_in* ipv4 = (sockaddr_in*)address;
     result->m_header.length = 8; //see CMappedAddressData with ipv4
-    result->m_data = new byte_t[result->m_header.length];
+    result->m_data = new int8_t[result->m_header.length];
     attributeData = (CMappedAddressData*)result->m_data;
     attributeData->reserved = 0x00;
     attributeData->family = 0x01;
@@ -50,7 +50,7 @@ int Stun::CStunAttributeFactory::CreateAddressAttribute(const sockaddr* address,
   else if (address->sa_family == AF_INET6) {
     sockaddr_in6* ipv6 = (sockaddr_in6*)address;
     result->m_header.length = 20; //see CMappedAddressData with ipv6
-    result->m_data = new byte_t[result->m_header.length];
+    result->m_data = new int8_t[result->m_header.length];
     attributeData = (CMappedAddressData*)result->m_data;
     attributeData->reserved = 0x00;
     attributeData->family = 0x02;
@@ -68,22 +68,22 @@ int Stun::CStunAttributeFactory::CreateAddressAttribute(const sockaddr* address,
 }
 //////////////////////////////////////////////////////////////////////////
 
-int Stun::CStunAttributeFactory::CreateUnknownAttrAttribute( word_t unknownType,
+int Stun::CStunAttributeFactory::CreateUnknownAttrAttribute( int16_t unknownType,
                                                              CStunAttribute** lpStunAttribute ) {
   CStunAttribute* result = MallocStunAttribute();
   result->m_header.type = AT_UNKNOWN_ATTRIBUTE;
   result->m_header.length = 4; //32 bit
-  result->m_data = new byte_t[result->m_header.length];
+  result->m_data = new int8_t[result->m_header.length];
   memset(result->m_data, 0, result->m_header.length);
-  word_t* wData = (word_t*)result->m_data;
+  int16_t* wData = (int16_t*)result->m_data;
   wData[0] = unknownType;
   *lpStunAttribute = result;
   return AEC_SUCCESS;
 }
 //////////////////////////////////////////////////////////////////////////
 
-int Stun::CStunAttributeFactory::CreateErrorAttribute( word_t code,
-                                                       const byte_t* reasonPhrase,
+int Stun::CStunAttributeFactory::CreateErrorAttribute( int16_t code,
+                                                       const char* reasonPhrase,
                                                        CStunAttribute** lpStunAttribute ) {
   CStunAttribute* result = MallocStunAttribute();
 
@@ -94,7 +94,7 @@ int Stun::CStunAttributeFactory::CreateErrorAttribute( word_t code,
     result->m_header.length++;
 
   result->m_header.length+=4;
-  result->m_data = new byte_t[result->m_header.length];
+  result->m_data = new int8_t[result->m_header.length];
   memset(result->m_data, 0, result->m_header.length);
 
   CErrorData* errorData = (CErrorData*)result->m_data;

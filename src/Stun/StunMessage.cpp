@@ -10,7 +10,7 @@ Stun::CStunMessage::CStunMessage( void ) : m_attributesCount(0),
   DefaultInit();
 }
 
-Stun::CStunMessage::CStunMessage( byte_t msgClass, word_t msgMethod, U_ID id )
+Stun::CStunMessage::CStunMessage( int8_t msgClass, int16_t msgMethod, U_ID id )
 : m_attributesCount(0), m_msgClass(msgClass), m_msgMethod(msgMethod) {
   DefaultInit();
   m_header.msg_type = ConstructType(msgClass, msgMethod);
@@ -32,47 +32,47 @@ Stun::CStunMessage::~CStunMessage( void ) {
 }
 //////////////////////////////////////////////////////////////////////////
 
-Stun::StunMessageErrorCodes Stun::CStunMessage::StunMsgHeaderFromNetStream( byte_t* stream ) {
-  word_t msg_type =  CCommons::GetWordFromNetStream(stream);
+Stun::StunMessageErrorCodes Stun::CStunMessage::StunMsgHeaderFromNetStream( int8_t* stream ) {
+  int16_t msg_type =  CCommons::GetWordFromNetStream(stream);
 
   if (msg_type & 0x3000)
     return SMEC_NOT_STUN_MSG_ERROR;
 
   SetMessageType(msg_type);
-  stream+=sizeof(word_t);
+  stream+=sizeof(int16_t);
   m_header.msg_len = CCommons::GetWordFromNetStream(stream);
-  stream+=sizeof(word_t);
+  stream+=sizeof(int16_t);
   m_header.magic_cookie = CCommons::GetDWordFromNetStream(stream);
-  stream+=sizeof(dword_t);
+  stream+=sizeof(int32_t);
   memcpy(m_header.u_id.bytes, stream, sizeof(m_header.u_id.bytes));
   return SMEC_SUCCESS;
 }
 //////////////////////////////////////////////////////////////////////////
 
-Stun::StunMessageErrorCodes Stun::CStunMessage::StunMsgHeaderToNetStream( byte_t* stream ) const {
+Stun::StunMessageErrorCodes Stun::CStunMessage::StunMsgHeaderToNetStream( int8_t* stream ) const {
   CCommons::SetWordToNetStream(stream, m_header.msg_type);
-  stream += sizeof(word_t);
+  stream += sizeof(int16_t);
   CCommons::SetWordToNetStream(stream, m_header.msg_len);
-  stream += sizeof(word_t);
+  stream += sizeof(int16_t);
   CCommons::SetDWordToNetStream(stream, m_header.magic_cookie);
-  stream += sizeof(dword_t);
+  stream += sizeof(int32_t);
   memcpy(stream, m_header.u_id.bytes, sizeof(m_header.u_id.bytes));
   return SMEC_SUCCESS;
 }
 //////////////////////////////////////////////////////////////////////////
 
-byte_t Stun::CStunMessage::GetMessageClassFromType( word_t type ) {
+int8_t Stun::CStunMessage::GetMessageClassFromType( int16_t type ) {
   return ((type & 0x0100) >> 7) | ((type & 0x0010) >> 4);
 }
 //////////////////////////////////////////////////////////////////////////
 
-word_t Stun::CStunMessage::GetMessageMethodFromType( word_t type ) {
+int16_t Stun::CStunMessage::GetMessageMethodFromType( int16_t type ) {
   return ((type & 0x000f) | ((type & 0x00e0) >> 1) | ((type & 0x3e00) >> 2));
 }
 //////////////////////////////////////////////////////////////////////////
 
 //work with consts is faster
-word_t Stun::CStunMessage::ConstructType(const word_t msgClass, const word_t msgMethod ) {
+int16_t Stun::CStunMessage::ConstructType(const int16_t msgClass, const int16_t msgMethod ) {
   /*msgClass = (((msgClass << 7) & 0x0100) | ((msgClass << 4) & 0x0010));
   msgMethod = ((msgMethod & 0x000f) | ((msgMethod << 1) & 0x00e0) | ((msgMethod << 2) & 0x3e00));
   return 0x3fff & (msgClass | msgMethod)*/
@@ -83,15 +83,15 @@ word_t Stun::CStunMessage::ConstructType(const word_t msgClass, const word_t msg
 //////////////////////////////////////////////////////////////////////////
 
 
-void Stun::CStunMessage::SetMessageType( word_t message_type ) {
+void Stun::CStunMessage::SetMessageType( int16_t message_type ) {
   m_header.msg_type = message_type;
   m_msgClass = GetMessageClassFromType(message_type);
   m_msgMethod = GetMessageMethodFromType(message_type);
 }
 //////////////////////////////////////////////////////////////////////////
 
-int Stun::CStunMessage::InitByNetStream( byte_t* stream ) {
-  byte_t* streamEnd;
+int Stun::CStunMessage::InitByNetStream( int8_t* stream ) {
+  int8_t* streamEnd;
   int aec;
   m_attributesCount = 0;
 
@@ -155,8 +155,8 @@ int Stun::CStunMessage::RemoveMessageAttribute( CStunAttribute* stunAttribute ) 
 }
 //////////////////////////////////////////////////////////////////////////
 
-int Stun::CStunMessage::Serialize( byte_t** lpStream ) const {
-  byte_t* stream = new byte_t[this->FullLength()];
+int Stun::CStunMessage::Serialize( int8_t** lpStream ) const {
+  int8_t* stream = new int8_t[this->FullLength()];
 
   int result = StunMsgHeaderToNetStream(stream);
   stream += sizeof(m_header);

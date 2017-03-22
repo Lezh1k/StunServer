@@ -1,51 +1,51 @@
-#include "Commons.h"
 #include <memory.h>
 #include <time.h>
 #include <arpa/inet.h>
 #include <math.h>
+#include "Commons/Commons.h"
 
-void Stun::CCommons::SwapBytes( byte_t* b1, byte_t* b2 ) {
-  byte_t tmp = *b1;
+void Stun::CCommons::SwapBytes( int8_t* b1, int8_t* b2 ) {
+  int8_t tmp = *b1;
   *b1 = *b2;
   *b2 = tmp;
 }
 
 //////////////////////////////////////////////////////////////////////////
 
-dword_t Stun::CCommons::SwapDword(dword_t val) {
-  register dword_t res, arg;
+int32_t Stun::CCommons::SwapDword(int32_t val) {
+  register int32_t res, arg;
   arg = val;
   asm ("bswap %0" : "=r" (res) : "0" (arg));
   return res;
 }
 
-word_t Stun::CCommons::SwapWord(word_t val){
-  register word_t res, arg;
+int16_t Stun::CCommons::SwapWord(int16_t val){
+  register int16_t res, arg;
   arg = val;
   asm ("ror %0, 8" : "=r" (res) : "0" (arg) : "cc");
   return res;
 }
 //////////////////////////////////////////////////////////////////////////
 
-word_t Stun::CCommons::GetWordFromNetStream(const byte_t* stream ) {
-  return ((word_t)stream[0] << 8) | stream[1];
+int16_t Stun::CCommons::GetWordFromNetStream(const int8_t* stream ) {
+  return ((int16_t)stream[0] << 8) | stream[1];
 }
 //////////////////////////////////////////////////////////////////////////
 
-void Stun::CCommons::SetWordToNetStream( byte_t* stream, word_t val ) {  
-  stream[0] = (byte_t)((val & 0xff00) >> 8);
-  stream[1] = (byte_t)(val & 0x00ff);
+void Stun::CCommons::SetWordToNetStream( int8_t* stream, int16_t val ) {  
+  stream[0] = (int8_t)((val & 0xff00) >> 8);
+  stream[1] = (int8_t)(val & 0x00ff);
 }
 //////////////////////////////////////////////////////////////////////////
 
-dword_t Stun::CCommons::GetDWordFromNetStream(const byte_t* stream ) {
-  dword_t result = ntohl(*((dword_t*)stream));
+int32_t Stun::CCommons::GetDWordFromNetStream(const int8_t* stream ) {
+  int32_t result = ntohl(*((int32_t*)stream));
   return result;
 }
 //////////////////////////////////////////////////////////////////////////
 
-void Stun::CCommons::SetDWordToNetStream( byte_t* stream, dword_t val ) {
-  *((dword_t*)stream) = htonl(val);
+void Stun::CCommons::SetDWordToNetStream( int8_t* stream, int32_t val ) {
+  *((int32_t*)stream) = htonl(val);
 }
 //////////////////////////////////////////////////////////////////////////
 

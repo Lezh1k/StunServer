@@ -46,15 +46,15 @@ namespace Stun
 #pragma pack(1)
     typedef union U_ID
     {
-      byte_t bytes[12];
-      dword_t dwords[3];
+      int8_t bytes[12];
+      int32_t dwords[3];
     }U_ID;
 
     typedef struct CStunMessageHeader
     {
-      word_t msg_type;
-      word_t msg_len;
-      dword_t magic_cookie;
+      int16_t msg_type;
+      int16_t msg_len;
+      int32_t magic_cookie;
       U_ID u_id;
     }CStunMessageHeader;
 #pragma pack(pop)
@@ -65,38 +65,38 @@ namespace Stun
     CStunAttribute* m_attributes[STUN_ATTRIBUTES_COUNT];
 
     int m_attributesCount;
-    byte_t m_msgClass;
-    word_t m_msgMethod;
+    int8_t m_msgClass;
+    int16_t m_msgMethod;
     //methods
 
-    void SetMessageType(word_t message_type);
+    void SetMessageType(int16_t message_type);
 
-    StunMessageErrorCodes StunMsgHeaderFromNetStream(byte_t* stream);
-    StunMessageErrorCodes StunMsgHeaderToNetStream(byte_t* stream) const;
+    StunMessageErrorCodes StunMsgHeaderFromNetStream(int8_t* stream);
+    StunMessageErrorCodes StunMsgHeaderToNetStream(int8_t* stream) const;
 
 
-    static inline word_t ConstructType(const word_t msgClass, const word_t msgMethod);
-    static inline byte_t GetMessageClassFromType(word_t type);
-    static inline word_t GetMessageMethodFromType(word_t type);
+    static inline int16_t ConstructType(const int16_t msgClass, const int16_t msgMethod);
+    static inline int8_t GetMessageClassFromType(int16_t type);
+    static inline int16_t GetMessageMethodFromType(int16_t type);
 
     inline void DefaultInit(void);
 
 
   public:
     CStunMessage(void);
-    CStunMessage(byte_t msgClass, word_t msgMethod, U_ID id);
+    CStunMessage(int8_t msgClass, int16_t msgMethod, U_ID id);
     ~CStunMessage(void);
 
-    int InitByNetStream(byte_t* stream);
+    int InitByNetStream(int8_t* stream);
     int AddMessageAttribute(CStunAttribute* stunAttribute);
     int RemoveMessageAttribute(CStunAttribute* stunAttribute);
-    int Serialize(byte_t** lpStream) const;
+    int Serialize(int8_t** lpStream) const;
 
-    byte_t MessageClass(void) const {return m_msgClass;}
-    word_t MessageMethod(void) const {return m_msgMethod;}
-    word_t MessageType(void) const {return m_header.msg_type;}
+    int8_t MessageClass(void) const {return m_msgClass;}
+    int16_t MessageMethod(void) const {return m_msgMethod;}
+    int16_t MessageType(void) const {return m_header.msg_type;}
     U_ID MessageId(void)const {return m_header.u_id;}
-    word_t FullLength(void) const {return m_header.msg_len + sizeof(CStunMessageHeader);}
+    int16_t FullLength(void) const {return m_header.msg_len + sizeof(CStunMessageHeader);}
 
     static int ConstructAnswerMessage( const Stun::CStunMessage* const srcMessage,
                                        Stun::CStunMessage* answerMessage,

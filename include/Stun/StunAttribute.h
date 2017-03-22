@@ -45,25 +45,25 @@ namespace Stun
 #pragma pack(push)
 #pragma pack(1)
   typedef struct CStunAttributeHeader {
-    word_t type;
-    word_t length;
+    uint16_t type;
+    uint16_t length;
   } CStunAttributeHeader;
   /////////////////////////////////////
 
   typedef struct CMappedAddressData {
-    byte_t reserved;
-    byte_t family;
-    word_t port;
+    int8_t reserved;
+    int8_t family;
+    int16_t port;
     union {
-      dword_t ipv4;
-      dword_t ipv6[4];
+      int32_t ipv4;
+      int32_t ipv6[4];
     } address;
   } CMappedAddressData;
   /////////////////////////////////////
 
   typedef struct CErrorData
   {
-    byte_t code[4];
+    int8_t code[4];
     char message[];
   } CErrorData;
   /////////////////////////////////////
@@ -74,42 +74,42 @@ namespace Stun
   {
   private:
     friend class CStunAttributeFactory;
-    typedef AttributeErrorCodes (CStunAttribute::*pfDataFromStream)(byte_t* stream);
-    typedef AttributeErrorCodes (CStunAttribute::*pfDataToStream)(byte_t* stream) const;
+    typedef AttributeErrorCodes (CStunAttribute::*pfDataFromStream)(int8_t* stream);
+    typedef AttributeErrorCodes (CStunAttribute::*pfDataToStream)(int8_t* stream) const;
     //fields
 
     CStunAttributeHeader m_header;
   private:
-    byte_t* m_data;
+    int8_t* m_data;
 
     //methods
-    AttributeErrorCodes HeaderFromNetStream(byte_t* stream);
-    AttributeErrorCodes HeaderToNetStream(byte_t* stream) const;
+    AttributeErrorCodes HeaderFromNetStream(int8_t* stream);
+    AttributeErrorCodes HeaderToNetStream(int8_t* stream) const;
 
     pfDataFromStream DataFromStreamFunction(void);
     pfDataToStream DataToStreamFunction(void) const;
 
     //parse functions
-    AttributeErrorCodes SoftwareReadFunction(byte_t* stream);
-    AttributeErrorCodes SoftwareWriteFunction(byte_t* stream) const;
+    AttributeErrorCodes SoftwareReadFunction(int8_t* stream);
+    AttributeErrorCodes SoftwareWriteFunction(int8_t* stream) const;
 
-    AttributeErrorCodes MappedAddressReadFunction(byte_t* stream);
-    AttributeErrorCodes MappedAddressWriteFunction(byte_t* stream) const;
+    AttributeErrorCodes MappedAddressReadFunction(int8_t* stream);
+    AttributeErrorCodes MappedAddressWriteFunction(int8_t* stream) const;
 
-    AttributeErrorCodes XorMappedAddressReadFunction(byte_t* stream);
-    AttributeErrorCodes XorMappedAddressWriteFunction(byte_t* stream) const;
+    AttributeErrorCodes XorMappedAddressReadFunction(int8_t* stream);
+    AttributeErrorCodes XorMappedAddressWriteFunction(int8_t* stream) const;
 
-    AttributeErrorCodes FakeReadFunction(byte_t* stream);
-    AttributeErrorCodes FakeWriteFunction(byte_t* stream) const;
+    AttributeErrorCodes FakeReadFunction(int8_t* stream);
+    AttributeErrorCodes FakeWriteFunction(int8_t* stream) const;
 
-    AttributeErrorCodes ReservedReadFunction(byte_t* stream);
-    AttributeErrorCodes ReservedWriteFunction(byte_t* stream) const;
+    AttributeErrorCodes ReservedReadFunction(int8_t* stream);
+    AttributeErrorCodes ReservedWriteFunction(int8_t* stream) const;
 
-    AttributeErrorCodes ErrorCodeReadFunction(byte_t* stream);
-    AttributeErrorCodes ErrorCodeWriteFunction(byte_t* stream) const;
+    AttributeErrorCodes ErrorCodeReadFunction(int8_t* stream);
+    AttributeErrorCodes ErrorCodeWriteFunction(int8_t* stream) const;
 
-    AttributeErrorCodes UnknownAttributeReadFunction(byte_t* stream);
-    AttributeErrorCodes UnknownAttributeWriteFunction(byte_t* stream) const;
+    AttributeErrorCodes UnknownAttributeReadFunction(int8_t* stream);
+    AttributeErrorCodes UnknownAttributeWriteFunction(int8_t* stream) const;
 
     CStunAttribute(void);
     CStunAttribute(sockaddr* addr, bool xored); //mapped or xor mapped address attribute
@@ -117,12 +117,12 @@ namespace Stun
 
   public:
 
-    word_t FullLength(void) const {return m_header.length + sizeof(CStunAttributeHeader);}
-    int InitByNetStream(byte_t* stream);
-    int Serialize(byte_t* lpStream) const;
+    int16_t FullLength(void) const {return m_header.length + sizeof(CStunAttributeHeader);}
+    int InitByNetStream(int8_t* stream);
+    int Serialize(int8_t* lpStream) const;
 
-    word_t AttributeType(void){return m_header.type;}
-    const byte_t* GetData(void) const {return m_data;}
+    int16_t AttributeType(void){return m_header.type;}
+    const int8_t* GetData(void) const {return m_data;}
   };
 
 }

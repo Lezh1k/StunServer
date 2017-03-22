@@ -3,10 +3,7 @@
 
 #define UNUSED_ARG(x) ((void)(x))
 
-typedef char            byte_t;
-typedef unsigned short  word_t;
-typedef unsigned int    dword_t;
-
+#include <stdint.h>
 #include <string>
 #include <algorithm>
 
@@ -21,21 +18,21 @@ namespace Stun {
     static const int MAGIC_COOKIE = 0x2112A442;
     //methods
 
-    static void SwapBytes(byte_t* b1, byte_t* b2);
+    static void SwapBytes(int8_t* b1, int8_t* b2);
 
-    static word_t SwapWord(word_t val);
-    static dword_t SwapDword(dword_t val);
+    static int16_t SwapWord(int16_t val);
+    static int32_t SwapDword(int32_t val);
 
-    static word_t HToNs(word_t val) {return SwapWord(val);}
-    static word_t NToHs(word_t val) {return SwapWord(val);}
+    static int16_t HToNs(int16_t val) {return SwapWord(val);}
+    static int16_t NToHs(int16_t val) {return SwapWord(val);}
 
-    static dword_t HToNl(dword_t val) { return SwapDword(val);}
-    static dword_t NToHl(dword_t val) { return SwapDword(val);}
+    static int32_t HToNl(int32_t val) { return SwapDword(val);}
+    static int32_t NToHl(int32_t val) { return SwapDword(val);}
 
-    static word_t GetWordFromNetStream(const byte_t* stream);
-    static void   SetWordToNetStream(byte_t* stream, word_t val);
-    static dword_t GetDWordFromNetStream(const byte_t* stream);
-    static void  SetDWordToNetStream(byte_t* stream, dword_t val);
+    static int16_t GetWordFromNetStream(const int8_t* stream);
+    static void   SetWordToNetStream(int8_t* stream, int16_t val);
+    static int32_t GetDWordFromNetStream(const int8_t* stream);
+    static void  SetDWordToNetStream(int8_t* stream, int32_t val);
 
     static char* CurrentDateFileNameString(void);
     static char* CurrentDateTimeString(void);

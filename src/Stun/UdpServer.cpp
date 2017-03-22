@@ -1,7 +1,8 @@
-#include "UdpServer.h"
+#include <unistd.h>
 #include "EventLoop/IFunctor.h"
 #include "EventLoop/FunctorWithoutResult.h"
 #include "Commons/ApplicationLog.h"
+#include "Stun/UdpServer.h"
 
 Stun::CUdpServer::CUdpServer(int buffLen, const CStunSettings &settings)
   : m_isListening(false), m_dataBufferLen(buffLen) {
@@ -24,7 +25,7 @@ bool Stun::CUdpServer::InternalInitialize( const CStunSettings &settings ) {
   if (!bResult)
     return false;
   for (int i = 0; i < m_serverSocketsCount; ++i) {
-    m_dataBuffer[i] = new byte_t[m_dataBufferLen];
+    m_dataBuffer[i] = new int8_t[m_dataBufferLen];
     m_recvEventLoop[i] = new CEventLoop(NULL, NULL, NULL, 10000, true);
   }
   return true;
@@ -58,7 +59,7 @@ Stun::ServerErrors Stun::CUdpServer::StartListen( pfDataReceived_t callback ) {
     m_dataReceivedCallback = callback;
 
     IFunctor* func =
-      new FunctorWithoutResult<CUdpServer*, SOCKET, byte_t*, int>(InternalListen, this,
+      new FunctorWithoutResult<CUdpServer*, SOCKET, int8_t*, int>(InternalListen, this,
       m_hServerSockets[i], m_dataBuffer[i], m_dataBufferLen, "InternalUdpListen");
     m_recvEventLoop[i]->InvokeActionAsync(func);
   }
@@ -70,7 +71,7 @@ Stun::ServerErrors Stun::CUdpServer::StartListen( pfDataReceived_t callback ) {
 
 void Stun::CUdpServer::InternalListen( CUdpServer* instance,
                                        SOCKET sock,
-                                       byte_t* buff,
+                                       int8_t* buff,
                                        int buffLen ) {
   int nReceived;
   sockaddr_in senderAddr;
@@ -102,7 +103,7 @@ void Stun::CUdpServer::InternalListen( CUdpServer* instance,
     to send the Binding Response with a different port than the one
     the Binding Request was received on.
     */
-SOCKET Stun::CUdpServer::GetOtherSocket( SOCKET srcSock, byte_t flags ) {
+SOCKET Stun::CUdpServer::GetOtherSocket( SOCKET srcSock, int8_t flags ) {
   flags&=0x06;
 
   for (int index = 0; index < m_serverSocketsCount; index++) {

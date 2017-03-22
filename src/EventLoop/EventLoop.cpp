@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <unistd.h>
-#include "EventLoop.h"
+#include "EventLoop/EventLoop.h"
 
 using namespace SynchroPrimitives;
 

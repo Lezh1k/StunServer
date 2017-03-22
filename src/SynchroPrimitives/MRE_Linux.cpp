@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <sys/time.h>
 #include <errno.h>
-#include "MRE_Linux.h"
-#include "Locker.h"
+#include "SynchroPrimitives/MRE_Linux.h"
+#include "SynchroPrimitives/Locker.h"
 
 int SynchroPrimitives::CLinuxManualResetEvent::MRE_Wait(CLinuxManualResetEvent *lpMre, int timeInMs) {
   int res = 0;
