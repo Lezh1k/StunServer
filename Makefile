@@ -1,4 +1,5 @@
-CC = $(AVR_PREFIX)gcc
+CC = gcc
+
 LIBS = 
 DEFS = -DNDEBUG 
 
@@ -9,16 +10,16 @@ SRC_DIR = src
 BIN_DIR = bin
 
 #device and program
-PRG = stun_server 
+PRG = sedi_stun 
 OPTIMIZE = -Os
-
 INCLUDES = -Iinclude 
 
-SOURCES = $(wildcard $(SRC_DIR)/*.cpp)
-OBJECTS	= $(patsubst %,$(BUILD_DIR)/%.o, $(subst src/,,$(subst .cpp,,$(SOURCES))))
+override CFLAGS = $(INCLUDES) $(OPTIMIZE) $(DEFS) -Wall -W 
+SOURCES = $(wildcard $(SRC_DIR)/*.c)
+OBJECTS	= $(patsubst %,$(BUILD_DIR)/%.o, $(subst src/,,$(subst .c,,$(SOURCES))))
 
 all: directories $(PRG) 
-$(PRG): $(BIN_DIR)/$(PRG).elf 
+$(PRG): $(BIN_DIR)/$(PRG).elf
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) -Wall $(CFLAGS) -c $< -o $@
@@ -37,3 +38,4 @@ clean:
 mrproper:
 	@rm -rf $(BUILD_DIR) 
 	@rm -rf $(BIN_DIR)
+
