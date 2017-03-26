@@ -3,6 +3,6 @@
 
 #include <stdint.h>
 
-int32_t stun_handle(int sock, int n, char* msg);
+int32_t stun_handle(int n, char* msg);
 
 #endif // STUN_H

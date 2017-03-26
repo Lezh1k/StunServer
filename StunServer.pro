@@ -10,4 +10,5 @@ HEADERS += \
     include/stun.h \
     include/commons.h
 
+LIBS += -pthread
 INCLUDEPATH += include
