@@ -1,6 +1,5 @@
 CC = gcc
 
-LIBS = 
 DEFS = -DNDEBUG 
 
 # Directories
@@ -12,19 +11,20 @@ BIN_DIR = bin
 #device and program
 PRG = sedi_stun 
 OPTIMIZE = -Os
+LIBS = -lpthread
 INCLUDES = -Iinclude 
 
-override CFLAGS = $(INCLUDES) $(OPTIMIZE) $(DEFS) -Wall -W 
+override CFLAGS = $(INCLUDES) $(OPTIMIZE) $(DEFS) $(LIBS) -Wall -W 
 SOURCES = $(wildcard $(SRC_DIR)/*.c)
 OBJECTS	= $(patsubst %,$(BUILD_DIR)/%.o, $(subst src/,,$(subst .c,,$(SOURCES))))
 
 all: directories $(PRG) 
-$(PRG): $(BIN_DIR)/$(PRG).elf
+$(PRG): $(BIN_DIR)/$(PRG)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) -Wall $(CFLAGS) -c $< -o $@
 
-$(BIN_DIR)/$(PRG).elf: $(OBJECTS)
+$(BIN_DIR)/$(PRG): $(OBJECTS)
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 directories:

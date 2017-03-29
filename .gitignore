@@ -31,3 +31,4 @@ build/*
 bin/*
 *.pro
 *.pro.user
+StunServer.pro.user
