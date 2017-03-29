@@ -69,20 +69,26 @@ ctrl_c_handler(int s) {
 }
 //////////////////////////////////////////////////////////////
 
+typedef struct client {
+  int32_t fd;
+  struct sockaddr_in addr;
+} client_t;
+
 void*
 tcp_listen(void* unused) {
   UNUSED_ARG(unused);
   fd_set fds_master, fds_ready_to_read;
-  struct sockaddr_in client_addr;
   struct sockaddr_in service;
-  int32_t new_client, h_serv, res;
+  int32_t h_serv, res, new_client;
   int32_t yes, fd_max, recv_n;
   socklen_t client_addr_len;
   uint32_t lst_clients_count = 0;
-  uint32_t lst_clients_size = FD_SETSIZE;
-  int32_t* lst_clients = malloc(lst_clients_size*sizeof(int32_t));
+  uint32_t lst_clients_size = 2;
+  client_t* lst_clients = malloc(lst_clients_size*sizeof(client_t));
+  client_t* lst_clients_tmp; //for reallocation
   char buff[STUN_MAXMSG] = {0};
-  memset(lst_clients, 0, lst_clients_size*sizeof(int32_t));
+
+  memset(lst_clients, 0, lst_clients_size*sizeof(client_t));
 
   yes = 1;
   fd_max = recv_n = 0;
@@ -127,7 +133,8 @@ tcp_listen(void* unused) {
   }
 
   FD_SET(h_serv, &fds_master);
-  lst_clients[lst_clients_count] = h_serv;
+  lst_clients[lst_clients_count].fd = h_serv;
+  lst_clients[lst_clients_count].addr = service;
   ++lst_clients_count;
   fd_max = h_serv;
   printf("Start listen tcp socket\n");
@@ -148,12 +155,12 @@ tcp_listen(void* unused) {
     }
 
     for (i = 0; i < lst_clients_count && res > 0; ++i) {
-      if (!FD_ISSET(lst_clients[i], &fds_ready_to_read)) continue;
+      if (!FD_ISSET(lst_clients[i].fd, &fds_ready_to_read)) continue;
       --res;
 
-      if (lst_clients[i] == h_serv) { //we have new connection here
+      if (lst_clients[i].fd == h_serv) { //we have new connection here
 
-        new_client = accept(h_serv, (struct sockaddr*) &client_addr, &client_addr_len);
+        new_client = accept(h_serv, (struct sockaddr*) &lst_clients[i].addr, &client_addr_len);
         if (new_client == INVALID_SOCKET) {
           printf("New connection error %d\n", errno);
           perror("Accept failed : ");
@@ -164,15 +171,23 @@ tcp_listen(void* unused) {
           fd_max = new_client;
 
         FD_SET(new_client, &fds_master);
-        lst_clients[lst_clients_count] = new_client;
+        lst_clients[lst_clients_count].fd = new_client;
         ++lst_clients_count;
-        printf(("New connection from %s\n"), inet_ntoa(client_addr.sin_addr));
+        if (lst_clients_count >= lst_clients_size) {
+          lst_clients_tmp = malloc(lst_clients_size*2*sizeof(client_t));
+          memset(lst_clients_tmp, 0, lst_clients_size*2*sizeof(client_t));
+          memcpy(lst_clients_tmp, lst_clients, lst_clients_size*sizeof(client_t));
+          lst_clients_size *= 2;
+          free(lst_clients);
+          lst_clients = lst_clients_tmp;
+        }
+        printf(("New connection from %s\n"), inet_ntoa(lst_clients[i].addr.sin_addr));
       } else { //we have received something
-        recv_n = recv(lst_clients[i], buff, sizeof(buff), 0);
+        recv_n = recv(lst_clients[i].fd, buff, sizeof(buff), 0);
         if (recv_n == 0) { //connection closed
-          FD_CLR(lst_clients[i], &fds_master);
-          close(lst_clients[i]);
-          printf(("Connection N:%d sock:%d closed\n"), i, lst_clients[i]);
+          FD_CLR(lst_clients[i].fd, &fds_master);
+          close(lst_clients[i].fd);
+          printf(("Connection N:%d sock:%d closed\n"), i, lst_clients[i].fd);
 
           for (j = i; j < lst_clients_count-1; ++j) {
             lst_clients[j] = lst_clients[j+1];
@@ -189,9 +204,9 @@ tcp_listen(void* unused) {
 
         //we here because we can read some bytes.
         if (stun_handle(recv_n, buff)) { //some error here
-          FD_CLR(lst_clients[i], &fds_master);
-          close(lst_clients[i]);
-          printf("Connection closed because received not stun message. Conn : %d, sock : %d\n", i, lst_clients[i]);
+          FD_CLR(lst_clients[i].fd, &fds_master);
+          close(lst_clients[i].fd);
+          printf("Connection closed because received not stun message. Conn : %d, sock : %d\n", i, lst_clients[i].fd);
           for (j = i; j < lst_clients_count-1; ++j) {
             lst_clients[j] = lst_clients[j+1];
           }
@@ -200,7 +215,7 @@ tcp_listen(void* unused) {
       } //else
     } //for i = h_serv
   } // while (is_running)
-
+  free(lst_clients);
   return NULL;
 } //tcp_listen()
 //////////////////////////////////////////////////////////////

@@ -30,7 +30,10 @@ typedef struct stun_hdr {
 typedef struct stun_attr {
   uint16_t type;
   uint16_t len;
-  uint8_t* value;
+  union {
+    uint8_t* lpByte;
+    char* lpCh;
+  } val;
 } stun_attr_t;
 
 typedef enum stun_attr_type {
@@ -57,17 +60,48 @@ typedef enum stun_attr_type {
 
 void
 stun_print_hdr(stun_hdr_t* hdr) {
-  printf("type : %x\n", hdr->type);
+  int i ;
+  printf("type : %02x\n", hdr->type);
   printf("len : %d\n", hdr->len);
-  printf("cookie : %x\n", hdr->magic_cookie);
-  printf("%.*s", 12, hdr->tx_id);
+  printf("cookie : %04x\n", hdr->magic_cookie);
+  for (i = 0; i < 12; ++i)
+    printf("%02x", hdr->tx_id[i]);
+  printf("\n");
 }
 
 int32_t
 stun_handle(int n, char *msg) {
+  int32_t i, offset = 0;
   stun_hdr_t* hdr = (stun_hdr_t*)msg;
-  if (n < sizeof(stun_hdr_t)) return 1;
+  stun_attr_t* attr;
+  if (n < (int)sizeof(stun_hdr_t)) return 1;
+  hdr->type = ntohs(hdr->type);
+  hdr->len = ntohs(hdr->len);
+  hdr->magic_cookie = ntohl(hdr->magic_cookie);
+
+  if (hdr->type & 0xc000) return 1;
+  if (hdr->magic_cookie != STUN_MAGIC_COOKIE) return 2;
+
   stun_print_hdr(hdr);
+  while (hdr->len > 0) {
+    attr = (stun_attr_t*)(msg + sizeof(stun_hdr_t) + offset);
+    attr->type = ntohs(attr->type);
+    attr->len = ntohs(attr->len);
+    attr->val.lpCh = (char*)(&attr + attr->len);
+    printf("attribute:\n");
+    printf("type : %02x\n", attr->type);
+    printf("len  : %02x\n", attr->len);
+    printf("val  : %.*s", attr->len, attr->val.lpCh);
+    offset += attr->len + 4; //attr hdr
+    hdr->len -= offset;
+  }
+
+  //if is binding request then process. else - do NOTHING! ignore that . AHAHA!
+  if (IS_REQUEST(hdr->type) && (hdr->type & 0x0001)) {
+    hdr->type = 0x0101; //success responce
+    hdr->len = 0;
+  }
+
   return 0;
 }
 //////////////////////////////////////////////////////////////
