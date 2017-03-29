@@ -81,7 +81,7 @@ tcp_listen(void* unused) {
   struct sockaddr_in service;
   int32_t h_serv, res, new_client;
   int32_t yes, fd_max, recv_n;
-  socklen_t client_addr_len;
+  socklen_t client_addr_len = sizeof(service);
   uint32_t lst_clients_count = 0;
   uint32_t lst_clients_size = 2;
   client_t* lst_clients = malloc(lst_clients_size*sizeof(client_t));
@@ -202,8 +202,9 @@ tcp_listen(void* unused) {
           continue;
         }
 
-        //we here because we can read some bytes.
-        if (stun_handle(recv_n, buff)) { //some error here
+        printf("received:\n");
+        //we here because we can read some bytes.        
+        if ((res = stun_handle(recv_n, buff, (struct sockaddr*) &lst_clients[i].addr)) < 0) { //some error here
           FD_CLR(lst_clients[i].fd, &fds_master);
           close(lst_clients[i].fd);
           printf("Connection closed because received not stun message. Conn : %d, sock : %d\n", i, lst_clients[i].fd);
@@ -211,7 +212,11 @@ tcp_listen(void* unused) {
             lst_clients[j] = lst_clients[j+1];
           }
           --lst_clients_count;
-        } //stun_handle
+        } else {
+          write(lst_clients[i].fd, buff, res);
+          printf("megatest:\n");
+          stun_handle(res, buff, (struct sockaddr*) &lst_clients[i].addr);
+        }
       } //else
     } //for i = h_serv
   } // while (is_running)
@@ -225,7 +230,7 @@ udp_listen(void* unused) {
   UNUSED_ARG(unused);
   struct sockaddr_in service;
   struct sockaddr_in sender_addr;
-  socklen_t sender_addr_size;
+  socklen_t sender_addr_size = sizeof(sender_addr);
   int32_t h_serv, recv_n;
   char buff[STUN_MAXMSG] = {0};
 
@@ -258,7 +263,13 @@ udp_listen(void* unused) {
       continue;
     }
     if (recv_n == 0) continue; //Hope we don't need to sleep here :)
-    stun_handle(recv_n, buff);
+    printf("udp received:\n");
+    recv_n = stun_handle(recv_n, buff, (struct sockaddr*) &sender_addr);
+    if (recv_n > 0) {
+      printf("udp planning to send : %d\n", recv_n);
+      recv_n = sendto(h_serv, buff, recv_n, 0, (struct sockaddr*) &sender_addr, sizeof(sender_addr));
+      printf("udp sent : %d\n", recv_n);
+    }
   } //while (is_running)
 
   return NULL;
