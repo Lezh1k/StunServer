@@ -267,9 +267,7 @@ udp_listen(void* unused) {
     printf("udp received from : %s:%d\n", inet_ntoa(sender_addr.sin_addr), sender_addr.sin_port);
     recv_n = stun_handle(recv_n, buff, (struct sockaddr*) &sender_addr);
     if (recv_n > 0) {
-      printf("udp planning to send : %d\n", recv_n);
       recv_n = sendto(h_serv, buff, recv_n, 0, (struct sockaddr*) &sender_addr, sizeof(sender_addr));
-      printf("udp sent : %d\n", recv_n);
     }
   } //while (is_running)
 

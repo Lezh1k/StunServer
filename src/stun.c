@@ -97,6 +97,8 @@ stun_print_hdr(stun_hdr_t* hdr) {
   printf("cookie : %04x\n", hdr->magic_cookie);
   for (i = 0; i < 12; ++i)
     printf("%02x", hdr->tx_id[i]);
+  printf("\n");
+
   while (hdr->len > 0) {
     printf("attribute: \n");
     attr_hdr = (stun_attr_hdr_t*)((uint8_t*)hdr + sizeof(stun_hdr_t) + offset);
@@ -107,6 +109,7 @@ stun_print_hdr(stun_hdr_t* hdr) {
     offset += attr_hdr->len + sizeof(stun_attr_hdr_t);
     hdr->len -= (attr_hdr->len + sizeof(stun_attr_hdr_t));
   }
+
   printf("end msg\n");
 }
 //////////////////////////////////////////////////////////////
@@ -133,9 +136,8 @@ stun_handle(int n, char *msg, struct sockaddr *addr) {
 
   stun_print_hdr(hdr);
 
-  //if is binding request then process. else - do NOTHING! ignore that . AHAHA!
-  if (IS_REQUEST(hdr->type) && (hdr->type & 0x0001)) {
-    hdr->type = 0x0101; //success responce
+  if (IS_REQUEST(hdr->type) && (hdr->type & 0x0001)) { //binding request
+    hdr->type = 0x0101;
     hdr->len = 0;
     hdr->magic_cookie = MAGIC_COOKIE;
     hdr->len += create_xor_mapped_addr_attribute(hdr, msg + sizeof(stun_hdr_t) + hdr->len, addr);
@@ -144,6 +146,17 @@ stun_handle(int n, char *msg, struct sockaddr *addr) {
     hdr->len = htons(hdr->len);
     hdr->magic_cookie = htonl(MAGIC_COOKIE);
     return ntohs(hdr->len) + sizeof(stun_hdr_t);
+  } else if (IS_SUCCESS_RESP(hdr->type)) { //success response
+    hdr->type = 0x0101;
+    hdr->len = 0;
+    hdr->magic_cookie = MAGIC_COOKIE;
+    hdr->len += create_software_attribute(msg + sizeof(stun_hdr_t) + hdr->len);
+    hdr->type = htons(hdr->type);
+    hdr->len = htons(hdr->len);
+    hdr->magic_cookie = htonl(MAGIC_COOKIE);
+    return ntohs(hdr->len) + sizeof(stun_hdr_t);
+  } else if (IS_ERR_RESP(hdr->type)) {
+    printf("todo handle error response\n");
   }
 
   return -3;
