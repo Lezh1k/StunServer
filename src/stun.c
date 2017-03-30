@@ -114,13 +114,22 @@ stun_print_hdr(stun_hdr_t* hdr) {
 int32_t
 stun_handle(int n, char *msg, struct sockaddr *addr) {
   stun_hdr_t* hdr = (stun_hdr_t*)msg;
-  if (n < (int)sizeof(stun_hdr_t)) return -1;
+  if (n < (int)sizeof(stun_hdr_t)) {
+    printf("n = %d < %d\n", n, sizeof(stun_hdr_t));
+    return -1;
+  }
   hdr->type = ntohs(hdr->type);
   hdr->len = ntohs(hdr->len);
   hdr->magic_cookie = ntohl(hdr->magic_cookie);
 
-  if (hdr->type & 0xc000) return -1;
-  if (hdr->magic_cookie != MAGIC_COOKIE) return -2;
+  if (hdr->type & 0xc000) {
+    printf("hdr->type = %02x incorrect\n", hdr->type);
+    return -1;
+  }
+  if (hdr->magic_cookie != MAGIC_COOKIE) {
+    printf("magic cookie : %x incorrect\n", hdr->magic_cookie);
+    return -2;
+  }
 
   stun_print_hdr(hdr);
 
@@ -129,10 +138,8 @@ stun_handle(int n, char *msg, struct sockaddr *addr) {
     hdr->type = 0x0101; //success responce
     hdr->len = 0;
     hdr->magic_cookie = MAGIC_COOKIE;
-
     hdr->len += create_xor_mapped_addr_attribute(hdr, msg + sizeof(stun_hdr_t) + hdr->len, addr);
     hdr->len += create_software_attribute(msg + sizeof(stun_hdr_t) + hdr->len);
-
     hdr->type = htons(hdr->type);
     hdr->len = htons(hdr->len);
     hdr->magic_cookie = htonl(MAGIC_COOKIE);
