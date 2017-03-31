@@ -118,7 +118,7 @@ int32_t
 stun_handle(int n, char *msg, struct sockaddr *addr) {
   stun_hdr_t* hdr = (stun_hdr_t*)msg;
   if (n < (int)sizeof(stun_hdr_t)) {
-    printf("n = %d < %d\n", n, sizeof(stun_hdr_t));
+    printf("n = %d < 20\n", n);
     return -1;
   }
   hdr->type = ntohs(hdr->type);
@@ -128,15 +128,10 @@ stun_handle(int n, char *msg, struct sockaddr *addr) {
   if (hdr->type & 0xc000) {
     printf("hdr->type = %02x incorrect\n", hdr->type);
     return -1;
-  }
-  if (hdr->magic_cookie != MAGIC_COOKIE) {
-    printf("magic cookie : %x incorrect\n", hdr->magic_cookie);
-    return -2;
-  }
-
-  stun_print_hdr(hdr);
+  }    
 
   if (IS_REQUEST(hdr->type) && (hdr->type & 0x0001)) { //binding request
+    stun_print_hdr(hdr);
     hdr->type = 0x0101;
     hdr->len = 0;
     hdr->magic_cookie = MAGIC_COOKIE;
@@ -147,6 +142,7 @@ stun_handle(int n, char *msg, struct sockaddr *addr) {
     hdr->magic_cookie = htonl(MAGIC_COOKIE);
     return ntohs(hdr->len) + sizeof(stun_hdr_t);
   } else if (IS_SUCCESS_RESP(hdr->type)) { //success response
+    stun_print_hdr(hdr);
     hdr->type = 0x0101;
     hdr->len = 0;
     hdr->magic_cookie = MAGIC_COOKIE;

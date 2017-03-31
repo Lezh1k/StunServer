@@ -51,6 +51,9 @@ main(int argc, char *argv[]) {
     usleep(1000);
   }
 
+//  pthread_join(pt_tcp, NULL);
+//  pthread_join(pt_udp, NULL);
+
   return 0;
 }
 //////////////////////////////////////////////////////////////
