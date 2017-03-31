@@ -60,8 +60,12 @@ typedef enum stun_attr_type {
 } stun_attr_type_t;
 //////////////////////////////////////////////////////////////
 
-int create_xor_mapped_addr_attribute(stun_hdr_t *msg_hdr, void* pool, struct sockaddr *address);
+int create_mapped_addr_attribute(stun_hdr_t *msg_hdr,
+                                     void* pool,
+                                     struct sockaddr *address,
+                                     int8_t xored);
 int create_software_attribute(void* pool);
+
 static inline void print_attr_type(uint16_t type) {
   switch (type) {
     case SAT_Reserved : printf("reserved"); break;
@@ -69,7 +73,7 @@ static inline void print_attr_type(uint16_t type) {
     case SAT_Res_ResponseAddress : printf("reserved response address"); break;
     case SAT_Res_ChangeAddress : printf("reserved change address"); break;
     case SAT_Res_SourceAddress : printf("reserved source address"); break;
-    case SAT_Res_ChangedAddress : printf("reserved change address"); break;
+    case SAT_Res_ChangedAddress : printf("reserved changed address"); break;
     case SAT_Username : printf("username"); break;
     case SAT_Res_Password : printf("password"); break;
     case SAT_MessageIntegrity : printf("message integrity"); break;
@@ -134,8 +138,8 @@ stun_handle(int n, char *msg, struct sockaddr *addr) {
     stun_print_hdr(hdr);
     hdr->type = 0x0101;
     hdr->len = 0;
-    hdr->magic_cookie = MAGIC_COOKIE;
-    hdr->len += create_xor_mapped_addr_attribute(hdr, msg + sizeof(stun_hdr_t) + hdr->len, addr);
+    hdr->len += create_mapped_addr_attribute(hdr, msg + sizeof(stun_hdr_t) + hdr->len,
+                                             addr, hdr->magic_cookie == MAGIC_COOKIE);
     hdr->len += create_software_attribute(msg + sizeof(stun_hdr_t) + hdr->len);
     hdr->type = htons(hdr->type);
     hdr->len = htons(hdr->len);
@@ -145,7 +149,6 @@ stun_handle(int n, char *msg, struct sockaddr *addr) {
     stun_print_hdr(hdr);
     hdr->type = 0x0101;
     hdr->len = 0;
-    hdr->magic_cookie = MAGIC_COOKIE;
     hdr->len += create_software_attribute(msg + sizeof(stun_hdr_t) + hdr->len);
     hdr->type = htons(hdr->type);
     hdr->len = htons(hdr->len);
@@ -173,9 +176,10 @@ typedef struct xor_mapped_attr {
 } xor_mapped_attr_t;
 #pragma pack(pop)
 
-int create_xor_mapped_addr_attribute(stun_hdr_t* msg_hdr,
-                                 void* pool,
-                                 struct sockaddr* address) {
+int create_mapped_addr_attribute(stun_hdr_t* msg_hdr,
+                                     void* pool,
+                                     struct sockaddr* address,
+                                     int8_t xored) {
   xor_mapped_attr_t* attr = (xor_mapped_attr_t*)pool;
   struct sockaddr_in* ipv4;
   struct sockaddr_in6 *ipv6;
@@ -186,8 +190,13 @@ int create_xor_mapped_addr_attribute(stun_hdr_t* msg_hdr,
     attr->hdr.type = SAT_XorMappedAddress;
     attr->reserved = 0;
     attr->family = 0x01;
-    attr->xport = htons(ipv4->sin_port ^ MAGIC_COOKIE_H);
-    attr->xaddr.ipv4_val = htonl(ipv4->sin_addr.s_addr ^ MAGIC_COOKIE);
+    if (xored) {
+      attr->xport = htons(ipv4->sin_port ^ MAGIC_COOKIE_H);
+      attr->xaddr.ipv4_val = htonl(ipv4->sin_addr.s_addr ^ MAGIC_COOKIE);
+    } else {
+      attr->xport = ipv4->sin_port;
+      attr->xaddr.ipv4_val = ipv4->sin_addr.s_addr;
+    }
   }
   else if (address->sa_family == AF_INET6) {
     ipv6 = (struct sockaddr_in6*)address;
@@ -195,14 +204,19 @@ int create_xor_mapped_addr_attribute(stun_hdr_t* msg_hdr,
     attr->hdr.type = SAT_XorMappedAddress;
     attr->reserved = 0;
     attr->family = 0x02;
-    attr->xport = htons(ipv6->sin6_port ^ MAGIC_COOKIE_H);
-    {
-      uint32_t *src, *dst;
-      int i;
-      src = ipv6->sin6_addr.__in6_u.__u6_addr32;
-      dst = (uint32_t*) &msg_hdr->magic_cookie; //concatenation of magic cookie AND tx_id
-      for (i = 0; i < 4; ++i)
-        attr->xaddr.ipv6_val[i] = htonl(src[i] ^ dst[i]);
+    if (xored) {
+      attr->xport = htons(ipv6->sin6_port ^ MAGIC_COOKIE_H);
+      {
+        uint32_t *src, *dst;
+        int i;
+        src = ipv6->sin6_addr.__in6_u.__u6_addr32;
+        dst = (uint32_t*) &msg_hdr->magic_cookie; //concatenation of magic cookie AND tx_id
+        for (i = 0; i < 4; ++i)
+          attr->xaddr.ipv6_val[i] = htonl(src[i] ^ dst[i]);
+      }
+    } else {
+      attr->xport = ipv6->sin6_port;
+      memcpy(&attr->xaddr.ipv6_val, ipv6->sin6_addr.__in6_u.__u6_addr8, 16);
     }
   }
   ret_val = attr->hdr.len + sizeof(stun_attr_hdr_t);
