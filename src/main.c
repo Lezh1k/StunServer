@@ -297,6 +297,7 @@ udp_listen(void* arg) {
 
   FD_ZERO(&fds_master);
   FD_ZERO(&fds_ready_to_read);
+  fd_max = 0;
 
   for (sn = 0; sn < 4; ++sn) {
     h_serv[sn] = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
