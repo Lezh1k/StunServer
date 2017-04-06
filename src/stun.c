@@ -203,7 +203,7 @@ stun_prepare_message(int32_t n, char *msg, struct sockaddr *addr, int32_t *chang
         case SAT_Res_ResponseAddress :  attr_flags |= SATF_Res_ResponseAddress; break;
         case SAT_Res_ChangeAddress :
           attr_flags |= SATF_Res_ChangeAddress;
-          *change_request = (*(int32_t*)((char*)attr_hdr + sizeof(stun_attr_hdr_t)));
+          *change_request = ntohl(*(int32_t*)((char*)attr_hdr + sizeof(stun_attr_hdr_t)));
           break;
         case SAT_Res_SourceAddress :    attr_flags |= SATF_Res_SourceAddress; break;
         case SAT_Res_ChangedAddress :   attr_flags |= SATF_Res_ChangedAddress; break;
