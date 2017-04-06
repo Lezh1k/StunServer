@@ -277,6 +277,7 @@ tcp_listen(void* settings) {
 
 void*
 udp_listen(void* arg) {
+#define SERVICE_COUNT 4
   UNUSED_ARG(arg);
   fd_set fds_master, fds_ready_to_read;
   int32_t yes, fd_max, recv_n, res, sn, change_request, ch_i;
@@ -287,19 +288,20 @@ udp_listen(void* arg) {
 
   uint16_t ports[2] = {settings->port0, settings->port1};
   const char* server_names[2] = {settings->addr0, settings->addr1};
-  struct sockaddr_in services[4];
-  struct addrinfo *pHost, hints;
-  int32_t h_serv[4];
 
-  memset(&services, 0, sizeof(struct sockaddr_in)*4);
-  memset(&h_serv, 0, sizeof(int32_t)*4);
+  struct sockaddr_in services[SERVICE_COUNT];
+  struct addrinfo *pHost, hints;
+  int32_t h_serv[SERVICE_COUNT];
+
+  memset(&services, 0, sizeof(struct sockaddr_in)*SERVICE_COUNT);
+  memset(&h_serv, 0, sizeof(int32_t)*SERVICE_COUNT);
   memset(&hints, 0, sizeof(struct addrinfo));
 
   FD_ZERO(&fds_master);
   FD_ZERO(&fds_ready_to_read);
   fd_max = 0;
 
-  for (sn = 0; sn < 4; ++sn) {
+  for (sn = 0; sn < SERVICE_COUNT; ++sn) {
     h_serv[sn] = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (h_serv[sn] == INVALID_SOCKET) {
       printf("Invalid socket. Error : %d\n", errno);
@@ -353,7 +355,7 @@ udp_listen(void* arg) {
       continue;
     }
 
-    for (sn = 0; sn < 2 && res > 0; ++sn) {
+    for (sn = 0; sn < SERVICE_COUNT && res > 0; ++sn) {
 
       if (!FD_ISSET(h_serv[sn], &fds_ready_to_read)) continue;
       --res;
