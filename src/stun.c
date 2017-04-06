@@ -362,17 +362,25 @@ create_unknown_attribute(void* uaarg) {
 //////////////////////////////////////////////////////////////
 
 int32_t
-stun_handle_change_addr(struct sockaddr *src,
+stun_handle_change_addr(struct sockaddr *changed_addr,
+                        struct sockaddr *source_addr,
                         void *pool) {
   stun_hdr_t* hdr = (stun_hdr_t*)pool;
-  create_addr_attribute_arg_t arg;
+  create_addr_attribute_arg_t changed_addr_attr, source_addr_attr;
   int32_t res;
   hdr->len = ntohs(hdr->len);
-  arg.msg_hdr = hdr;
-  arg.pool = (char*)pool + hdr->len + sizeof(stun_hdr_t);
-  arg.address = src;
-  arg.attr_type = SAT_Res_SourceAddress;
-  hdr->len += create_addr_attribute(&arg);
+  changed_addr_attr.msg_hdr = hdr;
+  changed_addr_attr.pool = (char*)pool + hdr->len + sizeof(stun_hdr_t);
+  changed_addr_attr.address = changed_addr;
+  changed_addr_attr.attr_type = SAT_Res_ChangedAddress;
+  hdr->len += create_addr_attribute(&changed_addr_attr);
+
+  source_addr_attr.msg_hdr = hdr;
+  source_addr_attr.pool = (char*)pool + hdr->len + sizeof(stun_hdr_t);
+  source_addr_attr.address = source_addr;
+  source_addr_attr.attr_type = SAT_Res_SourceAddress;
+  hdr->len += create_addr_attribute(&source_addr_attr);
+
   res = hdr->len + sizeof(stun_hdr_t);
   hdr->len = ntohs(hdr->len);
   return res;
