@@ -368,9 +368,11 @@ udp_listen(void* arg) {
         continue;
       }
 
+      printf("received something from : %s\n", inet_ntoa(sender_addr.sin_addr));
       recv_n = stun_prepare_message(recv_n, buff, (struct sockaddr*) &sender_addr, &change_request);
       if (recv_n < 0) continue;
 
+      ch_i = sn;
       printf("change_request : %x\n", change_request);
       switch (change_request & 0x06) {
         case 0x00: //change neither
@@ -392,10 +394,9 @@ udp_listen(void* arg) {
             buff);
       recv_n = sendto(h_serv[ch_i], buff, recv_n, 0,
           (struct sockaddr*) &sender_addr, sizeof(sender_addr));
+      printf("sent %d bytes from %s:%d\n", recv_n,
+             inet_ntoa(services[ch_i].sin_addr), ntohs(services[ch_i].sin_port));
 
-      printf("sent : %d bytes from %s:%d to %s:%d\n", recv_n,
-             inet_ntoa(services[ch_i].sin_addr), services[ch_i].sin_port,
-             inet_ntoa(sender_addr.sin_addr), sender_addr.sin_port);
     } //for i < 2 do
   } //is running
   return NULL;
