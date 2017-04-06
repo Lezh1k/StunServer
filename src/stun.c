@@ -10,6 +10,7 @@
 
 #include "stun.h"
 #include "commons.h"
+#include "logger.h"
 
 /*
  Given a 16-bit STUN message type value in host byte order in msg_type
@@ -134,34 +135,6 @@ typedef struct create_unknown_attribute_arg {
   uint8_t ua_count;
 } create_unknown_attribute_arg_t;
 
-static inline void
-print_attr_type(uint16_t type) {
-  switch (type) {
-    case SAT_Reserved : printf("reserved"); break;
-    case SAT_MappedAddress : printf("mapped address"); break;
-    case SAT_Res_ResponseAddress : printf("reserved response address"); break;
-    case SAT_Res_ChangeAddress : printf("reserved change address"); break;
-    case SAT_Res_SourceAddress : printf("reserved source address"); break;
-    case SAT_Res_ChangedAddress : printf("reserved changed address"); break;
-    case SAT_Username : printf("username"); break;
-    case SAT_Res_Password : printf("password"); break;
-    case SAT_MessageIntegrity : printf("message integrity"); break;
-    case SAT_ErrorCode : printf("error code"); break;
-    case SAT_UnknownAttributes : printf("unknown attributes"); break;
-    case SAT_Res_ReflectedFrom : printf("reserved reflected from"); break;
-    case SAT_Realm : printf("realm"); break;
-    case SAT_Nonce : printf("nonce"); break;
-    case SAT_XorMappedAddress : printf("xor mapped address"); break;
-    case SAT_Software : printf("software"); break;
-    case SAT_AlternateServer : printf("alternate server"); break;
-    case SAT_Fingerprint : printf("fingerprint"); break;
-    default: printf("unknown"); break;
-  }
-  printf("\n");
-}
-//////////////////////////////////////////////////////////////
-
-
 int32_t
 stun_prepare_message(int32_t n, char *msg, struct sockaddr *addr, int32_t *change_request) {
   stun_hdr_t* hdr = (stun_hdr_t*)msg;
@@ -173,7 +146,7 @@ stun_prepare_message(int32_t n, char *msg, struct sockaddr *addr, int32_t *chang
   *change_request = 0;
 
   if (n < (int)sizeof(stun_hdr_t)) {
-    printf("n = %d < 20\n", n);
+    logger_log(LL_WARNING, "received not stun message. n = %d < 20", n);
     return -1;
   }
   hdr->type = ntohs(hdr->type);
@@ -181,7 +154,7 @@ stun_prepare_message(int32_t n, char *msg, struct sockaddr *addr, int32_t *chang
   hdr->magic_cookie = ntohl(hdr->magic_cookie);
 
   if (hdr->type & 0xc000) {
-    printf("hdr->type = %02x incorrect\n", hdr->type);
+    logger_log(LL_WARNING, "hdr->type = %02x is incorrect", hdr->type);
     return -1;
   }    
 
@@ -193,10 +166,6 @@ stun_prepare_message(int32_t n, char *msg, struct sockaddr *addr, int32_t *chang
       attr_hdr = (stun_attr_hdr_t*)((uint8_t*)hdr + offset);
       attr_hdr->type = ntohs(attr_hdr->type);
       attr_hdr->len = ntohs(attr_hdr->len);
-
-      printf("attribute: \n");
-      print_attr_type(attr_hdr->type);
-
       switch(attr_hdr->type) {
         case SAT_Reserved :             attr_flags |= SATF_Reserved; break;
         case SAT_MappedAddress :        attr_flags |= SATF_MappedAddress; break;
@@ -253,7 +222,7 @@ stun_prepare_message(int32_t n, char *msg, struct sockaddr *addr, int32_t *chang
     hdr->len = htons(hdr->len);
     return ntohs(hdr->len) + sizeof(stun_hdr_t);
   } else if (IS_SUCCESS_RESP(hdr->type)) { //success response
-    printf("success response\n");
+    logger_log(LL_INFO, "%s", "success response");
     hdr->type = attr_flags & SATF_UNKNOWN ? 0x0111 : 0x0101;
     hdr->len = 0;
     hdr->len += create_software_attribute(msg + sizeof(stun_hdr_t) + hdr->len);
@@ -262,7 +231,7 @@ stun_prepare_message(int32_t n, char *msg, struct sockaddr *addr, int32_t *chang
     hdr->magic_cookie = htonl(hdr->magic_cookie);
     return ntohs(hdr->len) + sizeof(stun_hdr_t);
   } else if (IS_ERR_RESP(hdr->type)) {
-    printf("todo handle error response\n");
+    logger_log(LL_WARNING, "%s", "todo handle error response");
   }
 
   return -3;
@@ -322,7 +291,7 @@ create_software_attribute(void* pool) {
   attr->hdr.type = SAT_Software;
   attr->hdr.len = 16;
   attr->data = (char*) ((uint8_t*)attr + sizeof(stun_attr_hdr_t));
-  memcpy(attr->data, "sedi stun 1.0.0\0", 16);
+  memcpy(attr->data, PROGRAM_NAME, 16);
   ret_val = attr->hdr.len + sizeof(stun_attr_hdr_t);
   attr->hdr.len = htons(attr->hdr.len);
   attr->hdr.type = htons(attr->hdr.type);
@@ -370,6 +339,7 @@ stun_handle_change_addr(struct sockaddr *changed_addr,
   create_addr_attribute_arg_t changed_addr_attr, source_addr_attr;
   int32_t res;
   hdr->len = ntohs(hdr->len);
+
   changed_addr_attr.msg_hdr = hdr;
   changed_addr_attr.pool = (char*)pool + hdr->len + sizeof(stun_hdr_t);
   changed_addr_attr.address = changed_addr;

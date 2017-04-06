@@ -17,6 +17,7 @@
 
 #include "commons.h"
 #include "stun.h"
+#include "logger.h"
 
 #define INVALID_SOCKET  (-1)
 #define STUN_PORT       3478
@@ -29,13 +30,6 @@ st_bool_t register_ctrl_c_handler();
 void ctrl_c_handler(int s);
 void *tcp_listen(void *settings);
 void *udp_listen(void *arg);
-
-typedef struct settings {
-  char addr0[16];
-  uint16_t port0;
-  char addr1[16];
-  uint16_t port1;
-} settings_t ;
 
 int
 main(int argc, char *argv[]) {
@@ -67,26 +61,28 @@ main(int argc, char *argv[]) {
         break;
       case 2:
         if (strlen(optarg) > 16) {
-          printf("addr0 argument is wrong : %s\n", optarg);
+          logger_log(LL_ERR, "addr0 argument is wrong : %s", optarg);
           return -2;
         }
         memcpy(settings.addr0, optarg, strlen(optarg));
         break;
       case 3:
         if (strlen(optarg) > 16) {
-          printf("addr1 argument is wrong : %s\n", optarg);
+          logger_log(LL_ERR, "addr1 argument is wrong : %s", optarg);
           return -3;
         }
         memcpy(settings.addr1, optarg, strlen(optarg));
         break;
       default:
-        printf("What's happened here? %d\n", oi);
+        logger_log(LL_ERR, "Something bad is happened. Option index = %d", oi);
         return -1;
     }
   };
 
+  logger_init();
+
   if (!register_ctrl_c_handler()) {
-    printf("Couldn't register ctrl_c handler\n");
+    logger_log(LL_ERR, "%s", "Couldn't register ctrl_c handler");
     return -1;
   }
 
@@ -100,9 +96,10 @@ main(int argc, char *argv[]) {
     usleep(1000);
   }
 
+  // I don't know why doesn't it work.
   //  pthread_join(pt_tcp, NULL);
   //  pthread_join(pt_udp, NULL);
-
+  logger_shutdown();
   return 0;
 }
 //////////////////////////////////////////////////////////////
@@ -146,7 +143,7 @@ tcp_listen(void* settings) {
   fd_max = recv_n = 0;
 
   if (lst_clients == NULL) {
-    printf("Can't allocate list of clients : %d\n", errno);
+    logger_log(LL_ERR, "Can't allocate list of clients : %d", errno);
     return NULL;
   }
 
@@ -155,15 +152,15 @@ tcp_listen(void* settings) {
 
   h_serv = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (h_serv == INVALID_SOCKET) {
-    printf("Invalid socket. Error : %d\n", errno);
-    perror("socket call failed : ");
+    logger_log(LL_ERR, "Invalid socket. Error : %d", errno);
     is_running = st_false;
+    return NULL;
   }
 
   if(setsockopt(h_serv, SOL_SOCKET, SO_REUSEADDR, (char*)&yes, sizeof(int)) == -1) {
-    printf("setsockopt call error : %d\n", errno);
-    perror("setsockopt call failed : ");
+    logger_log(LL_ERR, "setsockopt call error : %d", errno);
     is_running = st_false;
+    return NULL;
   }
 
   service.sin_family = AF_INET;
@@ -171,17 +168,17 @@ tcp_listen(void* settings) {
   service.sin_port = htons(STUN_PORT);
 
   if (bind(h_serv, (struct sockaddr*) &service, sizeof (service)) == -1) {
-    printf("Bind function failed with error %d\n", errno);
-    perror("Bind function failed : ");
+    logger_log(LL_ERR, "Bind function failed with error %d", errno);
     close(h_serv);
     is_running = st_false;
+    return NULL;
   }
 
   if (listen(h_serv, SOMAXCONN) == -1) {
-    printf("Listen function failed with error %d\n", errno);
-    perror("Listen call failed : ");
+    logger_log(LL_ERR, "Listen function failed with error %d", errno);
     close(h_serv);
     is_running = st_false;
+    return NULL;
   }
 
   FD_SET(h_serv, &fds_master);
@@ -189,7 +186,7 @@ tcp_listen(void* settings) {
   lst_clients[lst_clients_count].addr = service;
   ++lst_clients_count;
   fd_max = h_serv;
-  printf("Start listen tcp socket\n");
+  logger_log(LL_INFO, "%s", "Start listen tcp socket");
 
   while (is_running) {
     uint32_t i, j;
@@ -197,12 +194,11 @@ tcp_listen(void* settings) {
     res = select(fd_max+1, &fds_ready_to_read, NULL, NULL, NULL);
 
     if (res == -1) {
-      printf("Select error : %d\n", errno);
-      perror("Select failed : ");
+      logger_log(LL_ERR, "Select error : %d", errno);
       is_running = st_false;
       continue;
     } else if (res == 0) {
-      printf("Select socket timeout\n");
+      logger_log(LL_WARNING, "%s", "Select socket timeout");
       continue;
     }
 
@@ -214,8 +210,7 @@ tcp_listen(void* settings) {
 
         new_client = accept(h_serv, (struct sockaddr*) &lst_clients[i].addr, &client_addr_len);
         if (new_client == INVALID_SOCKET) {
-          printf("New connection error %d\n", errno);
-          perror("Accept failed : ");
+          logger_log(LL_WARNING, "New connection error %d", errno);
           continue;
         }
 
@@ -233,13 +228,13 @@ tcp_listen(void* settings) {
           free(lst_clients);
           lst_clients = lst_clients_tmp;
         }
-        printf(("New connection from %s\n"), inet_ntoa(lst_clients[i].addr.sin_addr));
+        logger_log(LL_DEBUG, "New connection from %s", inet_ntoa(lst_clients[i].addr.sin_addr));
       } else { //we have received something
         recv_n = recv(lst_clients[i].fd, buff, sizeof(buff), 0);
         if (recv_n == 0) { //connection closed
           FD_CLR(lst_clients[i].fd, &fds_master);
           close(lst_clients[i].fd);
-          printf(("Connection N:%d sock:%d closed\n"), i, lst_clients[i].fd);
+          logger_log(LL_DEBUG, "Connection N:%d sock:%d closed", i, lst_clients[i].fd);
 
           for (j = i; j < lst_clients_count-1; ++j) {
             lst_clients[j] = lst_clients[j+1];
@@ -249,17 +244,16 @@ tcp_listen(void* settings) {
           continue;
         }
         else if (recv_n < 0) { //recv error
-          printf("Recv error : %d\n", errno);
-          perror("recv call failed : ");
+          logger_log(LL_WARNING, "Recv error : %d", errno);
           continue;
         }
 
-        printf("received:\n");
         //we here because we can read some bytes.
         if ((res = stun_prepare_message(recv_n, buff, (struct sockaddr*) &lst_clients[i].addr, &change_request)) < 0) { //some error here
           FD_CLR(lst_clients[i].fd, &fds_master);
           close(lst_clients[i].fd);
-          printf("Connection closed because received not stun message. Conn : %d, sock : %d\n", i, lst_clients[i].fd);
+          logger_log(LL_WARNING,
+                     "Connection closed because received not stun message. Conn : %d, sock : %d\n", i, lst_clients[i].fd);
           for (j = i; j < lst_clients_count-1; ++j) {
             lst_clients[j] = lst_clients[j+1];
           }
@@ -304,21 +298,21 @@ udp_listen(void* arg) {
   for (sn = 0; sn < SERVICE_COUNT; ++sn) {
     h_serv[sn] = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (h_serv[sn] == INVALID_SOCKET) {
-      printf("Invalid socket. Error : %d\n", errno);
-      perror("socket call failed : ");
+      logger_log(LL_ERR, "Invalid socket. Error : %d", errno);
       is_running = st_false;
+      break;
     }
 
     if(setsockopt(h_serv[sn], SOL_SOCKET, SO_REUSEADDR, (char*)&yes, sizeof(int)) == -1) {
-      printf("setsockopt call error : %d\n", errno);
-      perror("setsockopt call failed : ");
+      logger_log(LL_ERR, "setsockopt call error : %d", errno);
       is_running = st_false;
+      break;
     }
 
     if (getaddrinfo(server_names[sn%2], NULL, &hints, &pHost) != 0) {
-      printf("getaddr info failed : %d\n", errno);
-      perror("getaddr info failed : \n");
-      continue;
+      logger_log(LL_ERR, "getaddr info failed : %d", errno);
+      is_running = st_false;
+      break;
     }
 
     services[sn].sin_family = AF_INET;
@@ -326,32 +320,31 @@ udp_listen(void* arg) {
     services[sn].sin_port = htons(ports[sn/2]);
 
     if (bind(h_serv[sn], (struct sockaddr*) &services[sn], sizeof (services[sn])) == -1) {
-      printf("Bind function failed with error %d\n", errno);
-      perror("Bind function failed : ");
+      logger_log(LL_ERR, "Bind function failed with error %d", errno);
       close(h_serv[sn]);
       is_running = st_false;
+      break;
     }
 
     FD_SET(h_serv[sn], &fds_master);
     if (fd_max < h_serv[sn])
       fd_max = h_serv[sn];
 
-    printf("listening to : %s:%d\n", inet_ntoa(services[sn].sin_addr), ports[sn/2]);
+    logger_log(LL_INFO, "listening to : %s:%d", inet_ntoa(services[sn].sin_addr), ports[sn/2]);
   } //for sn < 2
 
-  printf("Start listen udp socket\n");
+  logger_log(LL_INFO, "%s", "Start listen udp socket");
 
   while (is_running) {
     fds_ready_to_read = fds_master;
     res = select(fd_max+1, &fds_ready_to_read, NULL, NULL, NULL);
 
     if (res == -1) {
-      printf("Select error : %d\n", errno);
-      perror("Select failed : ");
+      logger_log(LL_ERR, "Select error : %d", errno);
       is_running = st_false;
       continue;
     } else if (res == 0) {
-      printf("Select socket timeout\n");
+      logger_log(LL_WARNING, "%s", "Select socket timeout");
       continue;
     }
 
@@ -363,17 +356,16 @@ udp_listen(void* arg) {
       recv_n = recvfrom(h_serv[sn], buff, STUN_MAXMSG, 0,
                         (struct sockaddr*) &sender_addr, &sender_addr_size);
       if (recv_n < 0) { //recv error
-        printf("Recv error : %d\n", errno);
-        perror("recv call failed : ");
+        logger_log(LL_WARNING, "Recv error : %d", errno);
         continue;
       }
 
-      printf("received something from : %s\n", inet_ntoa(sender_addr.sin_addr));
+      logger_log(LL_DEBUG, "received something from : %s", inet_ntoa(sender_addr.sin_addr));
       recv_n = stun_prepare_message(recv_n, buff, (struct sockaddr*) &sender_addr, &change_request);
       if (recv_n < 0) continue;
 
       ch_i = sn;
-      printf("change_request : %x\n", change_request);
+      logger_log(LL_DEBUG, "change_request : %x", change_request);
       switch (change_request & 0x06) {
         case 0x00: //change neither
           ch_i = sn;
@@ -385,7 +377,7 @@ udp_listen(void* arg) {
           ch_i = (sn+2)%4;
           break;
         case 0x06: //change both
-          ch_i = (sn+2)%4 - sn%2 ? 1 : -1;
+          ch_i = ((sn+2) % 4) - (sn%2 ? 1 : -1);
           break;
       }
       recv_n = stun_handle_change_addr(
@@ -394,7 +386,7 @@ udp_listen(void* arg) {
             buff);
       recv_n = sendto(h_serv[ch_i], buff, recv_n, 0,
           (struct sockaddr*) &sender_addr, sizeof(sender_addr));
-      printf("sent %d bytes from %s:%d\n", recv_n,
+      logger_log(LL_DEBUG, "sent %d bytes from %s:%d", recv_n,
              inet_ntoa(services[ch_i].sin_addr), ntohs(services[ch_i].sin_port));
 
     } //for i < 2 do
