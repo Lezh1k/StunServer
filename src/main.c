@@ -371,25 +371,25 @@ udp_listen(void* arg) {
       printf("change_request : %x\n", change_request);
       //add change address attribute
       recv_n = stun_handle_change_addr(
-            (struct sockaddr*)&services[(sn+2)%4 - sn%2 ? 1 : -1],
+            (struct sockaddr*)&services[(sn+2)%4 - (sn%2 ? 1 : -1)],
             (struct sockaddr*)&services[sn],
             buff);
 
       switch (change_request & 0x06) {
         case 0x00: //change neither
           recv_n = sendto(h_serv[sn], buff, recv_n, 0,
-                          (struct sockaddr*) &sender_addr, sizeof(sender_addr));
+              (struct sockaddr*) &sender_addr, sizeof(sender_addr));
           break;
         case 0x02: //change port
-          sendto(h_serv[sn%2 ? sn-1 : sn+1], buff, recv_n, 0,
+          recv_n = sendto(h_serv[sn%2 ? sn-1 : sn+1], buff, recv_n, 0,
               (struct sockaddr*) &sender_addr, sizeof(sender_addr));
           break;
         case 0x04: //change addr
-          sendto(h_serv[(sn+2)%4], buff, recv_n, 0,
+          recv_n = sendto(h_serv[(sn+2)%4], buff, recv_n, 0,
               (struct sockaddr*) &sender_addr, sizeof(sender_addr));
           break;
         case 0x06: //change both
-          sendto(h_serv[(sn+2)%4 - sn%2 ? 1 : -1], buff, recv_n, 0,
+          recv_n = sendto(h_serv[(sn+2)%4 - sn%2 ? 1 : -1], buff, recv_n, 0,
               (struct sockaddr*) &sender_addr, sizeof(sender_addr));
           break;
       }

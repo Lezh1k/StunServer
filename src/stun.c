@@ -241,7 +241,7 @@ stun_prepare_message(int32_t n, char *msg, struct sockaddr *addr, int32_t *chang
       hdr->len += create_error_attribute(&earg);
       ua_arg.pool = msg + sizeof(stun_hdr_t) + hdr->len;
       hdr->len += create_unknown_attribute(&ua_arg);
-    } else if ((attr_flags & SATF_Res_ChangeAddress) == 0) {
+    } else {
       create_addr_attribute_arg_t arg = {hdr, msg + sizeof(stun_hdr_t) + hdr->len, addr,
                                           hdr->magic_cookie == MAGIC_COOKIE ? SAT_XorMappedAddress : SAT_MappedAddress};
       hdr->len += create_addr_attribute(&arg);
