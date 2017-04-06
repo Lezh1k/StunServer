@@ -279,7 +279,7 @@ void*
 udp_listen(void* arg) {
   UNUSED_ARG(arg);
   fd_set fds_master, fds_ready_to_read;
-  int32_t yes, fd_max, recv_n, res, sn, change_request;
+  int32_t yes, fd_max, recv_n, res, sn, change_request, ch_i;
   struct sockaddr_in sender_addr;
   socklen_t sender_addr_size = sizeof(sender_addr);
   char buff[STUN_MAXMSG] = {0};
@@ -354,6 +354,7 @@ udp_listen(void* arg) {
     }
 
     for (sn = 0; sn < 2 && res > 0; ++sn) {
+
       if (!FD_ISSET(h_serv[sn], &fds_ready_to_read)) continue;
       --res;
 
@@ -365,48 +366,34 @@ udp_listen(void* arg) {
         continue;
       }
 
-      printf("udp received from : %s:%d\n", inet_ntoa(sender_addr.sin_addr), sender_addr.sin_port);
       recv_n = stun_prepare_message(recv_n, buff, (struct sockaddr*) &sender_addr, &change_request);
       if (recv_n < 0) continue;
+
       printf("change_request : %x\n", change_request);
-
-
       switch (change_request & 0x06) {
         case 0x00: //change neither
-          recv_n = stun_handle_change_addr(
-                (struct sockaddr*)&services[(sn+2)%4 - (sn%2 ? 1 : -1)],
-                (struct sockaddr*)&services[sn],
-                buff);
-          recv_n = sendto(h_serv[sn], buff, recv_n, 0,
-              (struct sockaddr*) &sender_addr, sizeof(sender_addr));
+          ch_i = sn;
           break;
         case 0x02: //change port
-          recv_n = stun_handle_change_addr(
-                (struct sockaddr*)&services[(sn+2)%4 - (sn%2 ? 1 : -1)],
-                (struct sockaddr*)&services[sn%2 ? sn-1 : sn+1],
-                buff);
-          recv_n = sendto(h_serv[sn%2 ? sn-1 : sn+1], buff, recv_n, 0,
-              (struct sockaddr*) &sender_addr, sizeof(sender_addr));
+          ch_i = sn%2 ? sn-1 : sn+1;
           break;
         case 0x04: //change addr
-          recv_n = stun_handle_change_addr(
-                (struct sockaddr*)&services[(sn+2)%4 - (sn%2 ? 1 : -1)],
-                (struct sockaddr*)&services[(sn+2)%4],
-                buff);
-          recv_n = sendto(h_serv[(sn+2)%4], buff, recv_n, 0,
-              (struct sockaddr*) &sender_addr, sizeof(sender_addr));
+          ch_i = (sn+2)%4;
           break;
         case 0x06: //change both
-          recv_n = stun_handle_change_addr(
-                (struct sockaddr*)&services[(sn+2)%4 - (sn%2 ? 1 : -1)],
-                (struct sockaddr*)&services[(sn+2)%4 - sn%2 ? 1 : -1],
-                buff);
-          recv_n = sendto(h_serv[(sn+2)%4 - sn%2 ? 1 : -1], buff, recv_n, 0,
-              (struct sockaddr*) &sender_addr, sizeof(sender_addr));
+          ch_i = (sn+2)%4 - sn%2 ? 1 : -1;
           break;
       }
+      recv_n = stun_handle_change_addr(
+            (struct sockaddr*)&services[(sn+2)%4 - (sn%2 ? 1 : -1)], //changed address
+            (struct sockaddr*)&services[ch_i], //source address
+            buff);
+      recv_n = sendto(h_serv[ch_i], buff, recv_n, 0,
+          (struct sockaddr*) &sender_addr, sizeof(sender_addr));
 
-      printf("sent :%d\n", recv_n);
+      printf("sent : %d bytes from %s:%d to %s:%d\n", recv_n,
+             inet_ntoa(services[ch_i].sin_addr), services[ch_i].sin_port,
+             inet_ntoa(sender_addr.sin_addr), sender_addr.sin_port);
     } //for i < 2 do
   } //is running
   return NULL;

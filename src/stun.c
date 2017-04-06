@@ -253,6 +253,7 @@ stun_prepare_message(int32_t n, char *msg, struct sockaddr *addr, int32_t *chang
     hdr->len = htons(hdr->len);
     return ntohs(hdr->len) + sizeof(stun_hdr_t);
   } else if (IS_SUCCESS_RESP(hdr->type)) { //success response
+    printf("success response\n");
     hdr->type = attr_flags & SATF_UNKNOWN ? 0x0111 : 0x0101;
     hdr->len = 0;
     hdr->len += create_software_attribute(msg + sizeof(stun_hdr_t) + hdr->len);
