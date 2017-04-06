@@ -7,6 +7,7 @@ INCLUDE_DIR = include
 BUILD_DIR = build
 SRC_DIR = src
 BIN_DIR = bin
+PREFIX = /usr/local/bin
 
 #device and program
 PRG = sedi_stun 
@@ -39,3 +40,5 @@ mrproper:
 	@rm -rf $(BUILD_DIR) 
 	@rm -rf $(BIN_DIR)
 
+install:
+	@cp $(BIN_DIR)/$(PRG) $(PREFIX)
