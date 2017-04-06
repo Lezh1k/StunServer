@@ -365,8 +365,12 @@ int32_t
 stun_handle_change_addr(struct sockaddr *src,
                         void *pool) {
   stun_hdr_t* hdr = (stun_hdr_t*)pool;
-  create_addr_attribute_arg_t arg = {hdr, (char*)pool + hdr->len + sizeof(stun_hdr_t),
-                                    src, SAT_Res_ChangedAddress};
+  create_addr_attribute_arg_t arg;
+  int32_t res;
+  hdr->len = ntohs(hdr->len);
+  arg = {hdr, (char*)pool + hdr->len + sizeof(stun_hdr_t), src, SAT_Res_ChangedAddress};
   hdr->len += create_addr_attribute(&arg);
-  return hdr->len + sizeof(stun_hdr_t);
+  res = hdr->len + sizeof(stun_hdr_t);
+  hdr->len = ntohs(hdr->len);
+  return res;
 }
