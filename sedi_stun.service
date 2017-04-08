@@ -1,0 +1,11 @@
+[Unit]
+Description=Stun server
+After=syslog.target
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/sedi_stun --addr0 127.0.0.1 --addr1 192.168.2.103
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
