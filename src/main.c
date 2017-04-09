@@ -37,7 +37,7 @@ main(int argc, char *argv[]) {
   UNUSED_ARG(argv);
   pthread_t pt_tcp, pt_udp;
   settings_t settings;
-  int oi;
+  int oi; //option index
 
   const struct option long_options[] = {
     {"port0", required_argument,  NULL, 0},
@@ -274,7 +274,8 @@ udp_listen(void* arg) {
 #define SERVICE_COUNT 4
   UNUSED_ARG(arg);
   fd_set fds_master, fds_ready_to_read;
-  int32_t yes, fd_max, recv_n, res, sn, change_request, ch_i;
+  int32_t yes, fd_max, change_request;
+  register int32_t recv_n, res, sn, ch_i;
   struct sockaddr_in sender_addr;
   socklen_t sender_addr_size = sizeof(sender_addr);
   char buff[STUN_MAXMSG] = {0};

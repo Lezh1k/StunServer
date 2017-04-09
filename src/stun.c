@@ -136,7 +136,10 @@ typedef struct create_unknown_attribute_arg {
 } create_unknown_attribute_arg_t;
 
 int32_t
-stun_prepare_message(int32_t n, char *msg, struct sockaddr *addr, int32_t *change_request) {
+stun_prepare_message(int32_t n,
+                     char* restrict msg,
+                     struct sockaddr* restrict addr,
+                     int32_t* restrict change_request) {
   stun_hdr_t* hdr = (stun_hdr_t*)msg;
   int32_t offset = sizeof(stun_hdr_t);
   stun_attr_hdr_t* attr_hdr;
@@ -332,9 +335,9 @@ create_unknown_attribute(void* uaarg) {
 //////////////////////////////////////////////////////////////
 
 int32_t
-stun_handle_change_addr(struct sockaddr *changed_addr,
-                        struct sockaddr *source_addr,
-                        void *pool) {
+stun_handle_change_addr(struct sockaddr * restrict changed_addr,
+                        struct sockaddr * restrict source_addr,
+                        void * restrict  pool) {
   stun_hdr_t* hdr = (stun_hdr_t*)pool;
   create_addr_attribute_arg_t changed_addr_attr, source_addr_attr;
   int32_t res;
