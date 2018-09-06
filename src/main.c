@@ -50,8 +50,8 @@ int main(int argc, char *argv[]) {
   const struct option long_options[] = {
     {"port0", required_argument,  NULL, 0},
     {"port1", required_argument,  NULL, 0},
-    {"addr0", optional_argument,  NULL, 0},
-    {"addr1", optional_argument,  NULL, 0},
+    {"addr0", required_argument,  NULL, 0},
+    {"addr1", required_argument,  NULL, 0},
     {NULL,    0,                  NULL, 0}
   };
 
