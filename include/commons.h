@@ -2,14 +2,8 @@
 #define COMMONS_H
 #include <stdint.h>
 
-typedef enum st_bool {
-  st_false = 0,
-  st_true
-} st_bool_t;
-
 #define UNUSED_ARG(x) ((void)x)
-//don't change
-#define PROGRAM_NAME  "sedi stun 1.0.0\0"
+#define PROGRAM_NAME  "mad stun 1.0.1"
 
 typedef struct settings {
   char addr0[16];

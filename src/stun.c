@@ -72,11 +72,10 @@ typedef struct create_error_attribute_arg {
 
 #pragma pack(pop)
 
-int32_t create_addr_attribute(void* caarg);
-int32_t create_software_attribute(void* pool);
-int32_t do_nothing(void* pool){UNUSED_ARG(pool); return 0;}
-int32_t create_error_attribute(void* earg);
-int32_t create_unknown_attribute(void* uaarg);
+static int32_t create_addr_attribute(void* caarg);
+static int32_t create_software_attribute(void* pool);
+static int32_t create_error_attribute(void* earg);
+static int32_t create_unknown_attribute(void* uaarg);
 
 typedef enum stun_attr_type {
   SAT_Reserved = 0x0000,
@@ -135,8 +134,7 @@ typedef struct create_unknown_attribute_arg {
   uint8_t ua_count;
 } create_unknown_attribute_arg_t;
 
-int32_t
-stun_prepare_message(int32_t n,
+int32_t stun_prepare_message(int32_t n,
                      char* restrict msg,
                      struct sockaddr* restrict addr,
                      int32_t* restrict change_request) {
@@ -241,8 +239,7 @@ stun_prepare_message(int32_t n,
 }
 //////////////////////////////////////////////////////////////
 
-int32_t
-create_addr_attribute(void* caarg) {
+int32_t create_addr_attribute(void* caarg) {
   create_addr_attribute_arg_t* arg = (create_addr_attribute_arg_t*)caarg;
   address_attr_t* attr = (address_attr_t*)arg->pool;
   struct sockaddr_in* ipv4;
@@ -287,8 +284,7 @@ create_addr_attribute(void* caarg) {
 }
 //////////////////////////////////////////////////////////////
 
-int32_t
-create_software_attribute(void* pool) {
+int32_t create_software_attribute(void* pool) {
   software_attr_t* attr = (software_attr_t*)pool;
   int ret_val = 0;
   attr->hdr.type = SAT_Software;
@@ -302,8 +298,7 @@ create_software_attribute(void* pool) {
 }
 //////////////////////////////////////////////////////////////
 
-int32_t
-create_error_attribute(void* earg) {
+int32_t create_error_attribute(void* earg) {
   create_error_attribute_arg_t* arg = (create_error_attribute_arg_t*)earg;
   stun_attr_hdr_t* attr = (stun_attr_hdr_t*)arg->pool;
 
@@ -317,8 +312,7 @@ create_error_attribute(void* earg) {
 }
 //////////////////////////////////////////////////////////////
 
-int32_t
-create_unknown_attribute(void* uaarg) {
+int32_t create_unknown_attribute(void* uaarg) {
   create_unknown_attribute_arg_t* arg = (create_unknown_attribute_arg_t*)uaarg;
   stun_attr_hdr_t* attr = (stun_attr_hdr_t*)arg->pool;
   uint8_t count = (arg->ua_count + 3) & ~3; //count = arg.ua_count; while (count % 4) ++count;
@@ -334,8 +328,7 @@ create_unknown_attribute(void* uaarg) {
 }
 //////////////////////////////////////////////////////////////
 
-int32_t
-stun_handle_change_addr(struct sockaddr * restrict changed_addr,
+int32_t stun_handle_change_addr(struct sockaddr * restrict changed_addr,
                         struct sockaddr * restrict source_addr,
                         void * restrict  pool) {
   stun_hdr_t* hdr = (stun_hdr_t*)pool;
