@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 #define UNUSED_ARG(x) ((void)x)
-#define PROGRAM_NAME  "mad stun 1.0.1"
+#define PROGRAM_NAME  "mad stun 1.0.1\0"
 
 typedef struct settings {
   char addr0[16];
