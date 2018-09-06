@@ -10,7 +10,7 @@ BIN_DIR = bin
 PREFIX = /usr/local/bin
 
 #device and program
-PRG = mad_stun 
+PRG = sedi_stun 
 OPTIMIZE = -Os
 LIBS = -lpthread
 INCLUDES = -Iinclude 
