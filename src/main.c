@@ -33,18 +33,12 @@ static inline int inetAddrValid(const char *str) {
   return inet_aton(str, &inaddr);
 }
 
-typedef struct settings_container {
-  settings_t *settings;
-  sigset_t *sigset;
-} settings_container_t;
-
 int main(int argc, char *argv[]) {
   UNUSED_ARG(argc);
   UNUSED_ARG(argv);
   pthread_t pt_udp;
   settings_t settings;
-  sigset_t sigset;
-  settings_container_t set_cont = {.settings = &settings, .sigset = &sigset};
+  sigset_t sigset;  
   int itmp, sig;
 
   const struct option long_options[] = {
@@ -103,7 +97,7 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-  if ((itmp = pthread_create(&pt_udp, NULL, udp_listen, (void*)&set_cont))) {
+  if ((itmp = pthread_create(&pt_udp, NULL, udp_listen, (void*)&settings))) {
     logger_log(LL_ERR, "%s:%d", "Couldn't start udp listen thread", itmp);
     return -1;
   }
@@ -163,8 +157,7 @@ void *udp_listen(void *arg) {
 
   struct sockaddr_in sender_addr;
   socklen_t sender_addr_size = sizeof(sender_addr);
-  settings_container_t *set_cont = (settings_container_t*)arg;
-  settings_t *settings = set_cont->settings;
+  settings_t *settings = (settings_t*)arg;
 
   uint16_t ports[2] = {settings->port0, settings->port1};
   const char *server_names[2] = {settings->addr0, settings->addr1};
@@ -281,9 +274,8 @@ void *udp_listen(void *arg) {
           (struct sockaddr*) &sender_addr, sizeof(sender_addr));
       logger_log(LL_DEBUG, "sent %d bytes from %s:%d", recv_n,
              inet_ntoa(services[ch_i].sin_addr), ntohs(services[ch_i].sin_port));
-
-    } //for i < 2 do
-  } //is running
+    } //for sn < sc
+  } //while is running
   return NULL;
 }
 //////////////////////////////////////////////////////////////

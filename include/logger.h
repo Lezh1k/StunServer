@@ -16,7 +16,6 @@ typedef enum log_level {
 
 void logger_init();
 void logger_shutdown();
-
 void logger_log(log_level_t level, const char* format, ...);
 
 #endif // LOGGER_H

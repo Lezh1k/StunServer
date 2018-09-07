@@ -189,14 +189,13 @@ int32_t stun_prepare_message(int32_t n,
         case SAT_Software :             attr_flags |= SATF_Software; break;
         case SAT_AlternateServer :      attr_flags |= SATF_AlternateServer; break;
         case SAT_Fingerprint :          attr_flags |= SATF_Fingerprint; break;
-        default:
-        {
+        default: {
           attr_flags |= SATF_UNKNOWN;
           if (ua_arg.ua_count < UNKNOWN_ATTRIBUTES_MAX_COUNT) {
             ua_arg.unknown_attributes[ua_arg.ua_count] = attr_hdr->type;
             ++ua_arg.ua_count;
           }
-        }
+        } //default
       } //switch
 
       offset += attr_hdr->len + sizeof(stun_attr_hdr_t);
