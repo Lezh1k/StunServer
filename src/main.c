@@ -108,6 +108,7 @@ int main(int argc, char *argv[]) {
     return -1;
   }
   is_running = false;
+  pthread_join(pt_udp, NULL);
   logger_shutdown();
   return 0;
 }
@@ -167,6 +168,9 @@ void *udp_listen(void *arg) {
   struct addrinfo *pHost, hints;
 
   int32_t sc = 0;
+#define ST_SEC 2
+
+  struct timeval select_timeout;
   if (strlen(settings->addr0)) ++sc;
   if (strlen(settings->addr1)) ++sc;
   sc *= 2; //because 2 ports
@@ -232,14 +236,17 @@ void *udp_listen(void *arg) {
 
   while (is_running) {
     fds_ready_to_read = fds_master;
-    res = select(fd_max+1, &fds_ready_to_read, NULL, NULL, NULL);
+    select_timeout.tv_sec = ST_SEC;
+    select_timeout.tv_usec = 0;
+
+    res = select(fd_max+1, &fds_ready_to_read, NULL, NULL, &select_timeout);
 
     if (res == -1) {
       logger_log(LL_ERR, "Select error : %d", errno);
       is_running = false;
       continue;
     } else if (res == 0) {
-      logger_log(LL_WARNING, "%s", "Select socket timeout");
+      logger_log(LL_DEBUG, "%s", "Select socket timeout");
       continue;
     }
 
